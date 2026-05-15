@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#000000">
+<title>Calculadora</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { background: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; height: 100dvh; overflow: hidden; user-select: none; }
+
+  /* ── CALCULADORA ── */
+  #calc-screen { display: flex; flex-direction: column; height: 100dvh; background: #000; }
+  #calc-display { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; padding: 0 24px 20px; }
+  #calc-expression { color: #555; font-size: 22px; text-align: right; min-height: 30px; word-break: break-all; }
+  #calc-result { color: #fff; font-size: 72px; font-weight: 200; text-align: right; word-break: break-all; line-height: 1; }
+  #calc-keys { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 12px; background: #000; }
+  .calc-btn {
+    aspect-ratio: 1; border-radius: 50%; border: none; cursor: pointer;
+    font-size: 28px; font-weight: 400; display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.1s;
+  }
+  .calc-btn:active { opacity: 0.6; }
+  .btn-func { background: #333; color: #fff; }
+  .btn-op { background: #ff9500; color: #fff; }
+  .btn-num { background: #1c1c1e; color: #fff; }
+  .btn-zero { border-radius: 40px; aspect-ratio: auto; grid-column: span 2; justify-content: flex-start; padding-left: 28px; }
+
+  /* ── PANTALLA NEGRA ── */
+  #black-screen { position: fixed; inset: 0; background: #000; z-index: 100; display: flex; align-items: center; justify-content: center; }
+
+  /* ── APP ── */
+  #app-screen { display: none; flex-direction: column; height: 100dvh; background: #0a0a0a; }
+
+  /* Header */
+  .app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 54px 16px 14px; border-bottom: 1px solid #181818;
+    background: #0a0a0a; flex-shrink: 0;
+  }
+  .app-header h1 { font-size: 20px; font-weight: 700; }
+  .header-actions { display: flex; gap: 8px; }
+  .btn-secondary { padding: 8px 14px; border-radius: 20px; border: 1px solid #2a2a2a; background: none; color: #aaa; font-size: 13px; cursor: pointer; }
+  .btn-primary { padding: 8px 14px; border-radius: 20px; border: none; background: #fff; color: #000; font-size: 13px; font-weight: 600; cursor: pointer; }
+
+  /* Rooms list */
+  #home-view { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+  #rooms-list { flex: 1; overflow-y: auto; padding: 12px; }
+  .room-card {
+    display: flex; align-items: center; background: #141414;
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; cursor: pointer;
+    border: 1px solid transparent; transition: border-color 0.2s;
+  }
+  .room-card.pinned { border-color: #2a2a2a; }
+  .room-icon { width: 38px; height: 38px; border-radius: 10px; background: #1e1e1e; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #555; margin-right: 12px; flex-shrink: 0; }
+  .room-info { flex: 1; }
+  .room-name { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+  .room-meta { font-size: 12px; color: #444; }
+  .room-delete { background: #1e1e1e; border: none; color: #ff3b30; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 12px; flex-shrink: 0; }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; color: #333; padding: 40px; text-align: center; }
+  .empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 { color: #444; margin-bottom: 8px; }
+  .app-footer { padding: 12px; text-align: center; color: #1e1e1e; font-size: 11px; flex-shrink: 0; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+  .modal-overlay.center { align-items: center; }
+  .modal-box { background: #141414; border-radius: 20px 20px 0 0; padding: 24px; width: 100%; max-width: 480px; }
+  .modal-box.center-box { border-radius: 20px; margin: 16px; }
+  .modal-title { font-size: 17px; font-weight: 600; margin-bottom: 20px; }
+  .modal-input { width: 100%; background: #1e1e1e; border: 1px solid #2a2a2a; border-radius: 12px; padding: 14px 16px; color: #fff; font-size: 15px; outline: none; margin-bottom: 12px; }
+  .modal-input::placeholder { color: #444; }
+  .modal-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; margin-bottom: 8px; }
+  .modal-btn-primary { background: #fff; color: #000; }
+  .modal-btn-cancel { background: #1e1e1e; color: #666; }
+  .modal-error { color: #ff3b30; font-size: 13px; margin-bottom: 10px; min-height: 18px; }
+
+  /* Chat */
+  #chat-view { display: none; flex-direction: column; height: 100dvh; background: #0a0a0a; }
+  .chat-header { display: flex; align-items: center; padding: 54px 16px 14px; border-bottom: 1px solid #181818; flex-shrink: 0; gap: 10px; }
+  .chat-back { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; padding: 0 8px 0 0; }
+  .chat-title { flex: 1; font-size: 16px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-delete { background: none; border: none; font-size: 18px; cursor: pointer; }
+
+  #messages-container { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+  .msg-wrapper { display: flex; flex-direction: column; max-width: 75%; }
+  .msg-wrapper.me { align-self: flex-end; align-items: flex-end; }
+  .msg-wrapper.them { align-self: flex-start; }
+  .sender-label { font-size: 11px; color: #444; margin-bottom: 4px; padding-left: 4px; }
+  .bubble { border-radius: 18px; overflow: hidden; cursor: pointer; }
+  .bubble.me { background: #fff; color: #000; }
+  .bubble.them { background: #1a1a1a; color: #fff; }
+  .bubble-text { padding: 10px 14px; font-size: 15px; line-height: 1.5; word-break: break-word; white-space: pre-wrap; }
+  .bubble-text a { color: #4a9eff; }
+  .bubble-img { width: min(260px, 60vw); height: min(260px, 60vw); object-fit: cover; display: block; cursor: pointer; }
+  .msg-timer { font-size: 11px; color: #222; margin-top: 4px; padding: 0 4px; }
+
+  /* Reply preview in bubble */
+  .reply-preview { background: rgba(0,0,0,0.2); border-left: 2px solid #444; padding: 6px 10px; margin: 8px 8px 0; border-radius: 6px; }
+  .reply-preview.in-me { background: rgba(0,0,0,0.1); border-left-color: #999; }
+  .reply-sender { font-size: 11px; color: #888; margin-bottom: 2px; }
+  .reply-text { font-size: 12px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Reactions */
+  .reactions-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+  .reaction-pill { background: #1a1a1a; border: 1px solid #222; border-radius: 12px; padding: 3px 8px; font-size: 13px; cursor: pointer; }
+  .reaction-pill.mine { border-color: #444; background: #222; }
+
+  /* Input bar */
+  .input-bar { display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px; padding-bottom: max(10px, env(safe-area-inset-bottom)); border-top: 1px solid #181818; background: #0a0a0a; flex-shrink: 0; }
+  .img-btn { width: 42px; height: 42px; border-radius: 50%; background: #141414; border: none; font-size: 18px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+  #msg-input { flex: 1; background: #141414; border: 1px solid #1e1e1e; border-radius: 22px; padding: 10px 16px; color: #fff; font-size: 15px; resize: none; outline: none; max-height: 120px; font-family: inherit; line-height: 1.4; }
+  #msg-input::placeholder { color: #333; }
+  .send-btn { width: 42px; height: 42px; border-radius: 50%; background: #fff; border: none; font-size: 18px; font-weight: 700; cursor: pointer; flex-shrink: 0; color: #000; transition: background 0.15s; }
+  .send-btn:disabled { background: #141414; color: #2a2a2a; }
+
+  /* Preview bars */
+  .preview-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #111; border-top: 1px solid #1e1e1e; flex-shrink: 0; }
+  .preview-thumb { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; }
+  .preview-label { flex: 1; font-size: 13px; color: #666; }
+  .preview-cancel { background: none; border: none; color: #555; font-size: 18px; cursor: pointer; padding: 4px; }
+
+  /* Reaction sheet */
+  .reaction-sheet { background: #141414; border-radius: 20px 20px 0 0; padding: 20px; width: 100%; max-width: 480px; }
+  .reaction-emojis { display: flex; justify-content: space-around; margin-bottom: 16px; }
+  .reaction-emoji-btn { width: 52px; height: 52px; border-radius: 50%; background: #1e1e1e; border: none; font-size: 26px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .reply-action-btn { width: 100%; padding: 14px; background: #1e1e1e; border: none; color: #fff; border-radius: 14px; font-size: 15px; cursor: pointer; }
+
+  /* Image lightbox */
+  #lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 200; display: none; align-items: center; justify-content: center; flex-direction: column; }
+  #lightbox img { max-width: 96%; max-height: 82vh; object-fit: contain; }
+  #lightbox p { color: #333; font-size: 13px; margin-top: 16px; cursor: pointer; }
+
+  /* Loading */
+  .loading { display: flex; align-items: center; justify-content: center; flex: 1; color: #333; }
+
+  @media (min-width: 600px) {
+    #calc-keys { max-width: 420px; margin: 0 auto; }
+    #calc-display { max-width: 420px; margin: 0 auto; width: 100%; }
+    .modal-overlay { align-items: center; }
+    .modal-box { border-radius: 20px; margin: 16px; max-width: 420px; }
+    #messages-container { max-width: 720px; margin: 0 auto; width: 100%; }
+    .input-bar { max-width: 720px; margin: 0 auto; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- PANTALLA NEGRA INICIAL -->
+<div id="black-screen"></div>
+
+<!-- CALCULADORA -->
+<div id="calc-screen" style="display:none">
+  <div id="calc-display">
+    <div id="calc-expression"></div>
+    <div id="calc-result">0</div>
+  </div>
+  <div id="calc-keys">
+    <button class="calc-btn btn-func" data-action="clear">AC</button>
+    <button class="calc-btn btn-func" data-action="sign">+/-</button>
+    <button class="calc-btn btn-func" data-action="percent">%</button>
+    <button class="calc-btn btn-op" data-action="op" data-val="÷">÷</button>
+    <button class="calc-btn btn-num" data-action="digit" data-val="7">7</button>
+    <button class="calc-btn btn-num" data-action="digit" data-val="8">8</button>
+    <button class="calc-btn btn-num" data-action="digit" data-val="9">9</button>
+    <button class="calc-btn btn-op" data-action="op" data-val="×">×</button>
+    <button class="calc-btn btn-num" data-action="digit" data-val="4">4</button>
+    <button class="calc-btn btn-num" data-action="digit" data-val="5">5</button>
+    <button class="calc-btn btn-num" data-action="digit" data-val="6">6</button>
+    <button class="calc-btn btn-op" data-action="op" data-val="−">−</button>
+    <button class="calc-btn btn-num" data-action="digit" data-val="1">1</button>
+    <button class="calc-btn btn-num" data-action="digit" data-val="2">2</button>
+    <button class="calc-btn btn-num" data-action="digit" data-val="3">3</button>
+    <button class="calc-btn btn-op" data-action="op" data-val="+">+</button>
+    <button class="calc-btn btn-num btn-zero" data-action="digit" data-val="0">0</button>
+    <button class="calc-btn btn-num" data-action="dot">.</button>
+    <button class="calc-btn btn-op" data-action="equals">=</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <!-- HOME -->
+  <div id="home-view">
+    <div class="app-header">
+      <h1>Salas</h1>
+      <div class="header-actions">
+        <button class="btn-secondary" onclick="showModal('join-modal')">Unirse</button>
+        <button class="btn-primary" onclick="showModal('create-modal')">+ Nueva</button>
+      </div>
+    </div>
+    <div id="rooms-list"></div>
+    <div class="app-footer">Mantén presionado una sala para fijarla · Mensajes duran 72h</div>
+  </div>
+
+  <!-- CHAT -->
+  <div id="chat-view">
+    <div class="chat-header">
+      <button class="chat-back" onclick="goHome()">←</button>
+      <span class="chat-title" id="chat-title"></span>
+      <button class="chat-delete" id="chat-delete-btn" onclick="confirmDeleteRoom()" style="display:none">🗑</button>
+    </div>
+    <div id="messages-container"></div>
+    <div id="reply-bar" class="preview-bar" style="display:none">
+      <div class="preview-label">
+        <div style="font-size:11px;color:#555;margin-bottom:2px" id="reply-bar-sender"></div>
+        <div id="reply-bar-text" style="font-size:13px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+      </div>
+      <button class="preview-cancel" onclick="clearReply()">✕</button>
+    </div>
+    <div id="image-preview-bar" class="preview-bar" style="display:none">
+      <img id="image-preview-thumb" class="preview-thumb" src="">
+      <span class="preview-label">Imagen lista para enviar</span>
+      <button class="preview-cancel" onclick="clearPendingImage()">✕</button>
+    </div>
+    <div class="input-bar">
+      <button class="img-btn" onclick="openImageOptions()">📷</button>
+      <textarea id="msg-input" placeholder="Mensaje..." rows="1" oninput="autoResize(this);updateSendBtn()"></textarea>
+      <button class="send-btn" id="send-btn" onclick="sendMessage()" disabled>↑</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODALES -->
+<div id="create-modal" class="modal-overlay" style="display:none" onclick="closeModalOnBg(event,'create-modal')">
+  <div class="modal-box">
+    <div class="modal-title">Nueva sala</div>
+    <input class="modal-input" id="create-name" placeholder="Nombre de la sala" maxlength="30">
+    <input class="modal-input" id="create-password" placeholder="Contraseña" type="password" maxlength="50">
+    <input class="modal-input" id="create-maxusers" placeholder="Máx usuarios (2-20)" type="number" min="2" max="20" value="2">
+    <div class="modal-error" id="create-error"></div>
+    <button class="modal-btn modal-btn-primary" onclick="createRoom()">Crear</button>
+    <button class="modal-btn modal-btn-cancel" onclick="hideModal('create-modal')">Cancelar</button>
+  </div>
+</div>
+
+<div id="join-modal" class="modal-overlay" style="display:none" onclick="closeModalOnBg(event,'join-modal')">
+  <div class="modal-box">
+    <div class="modal-title">Unirse a sala</div>
+    <input class="modal-input" id="join-name" placeholder="Nombre de la sala" maxlength="30">
+    <input class="modal-input" id="join-password" placeholder="Contraseña" type="password" maxlength="50">
+    <div class="modal-error" id="join-error"></div>
+    <button class="modal-btn modal-btn-primary" onclick="joinRoom()">Unirse</button>
+    <button class="modal-btn modal-btn-cancel" onclick="hideModal('join-modal')">Cancelar</button>
+  </div>
+</div>
+
+<div id="reaction-modal" class="modal-overlay" style="display:none" onclick="closeModalOnBg(event,'reaction-modal')">
+  <div class="reaction-sheet">
+    <div class="reaction-emojis">
+      <button class="reaction-emoji-btn" onclick="addReaction('👍')">👍</button>
+      <button class="reaction-emoji-btn" onclick="addReaction('❤️')">❤️</button>
+      <button class="reaction-emoji-btn" onclick="addReaction('😂')">😂</button>
+      <button class="reaction-emoji-btn" onclick="addReaction('😮')">😮</button>
+      <button class="reaction-emoji-btn" onclick="addReaction('😢')">😢</button>
+      <button class="reaction-emoji-btn" onclick="addReaction('🔥')">🔥</button>
+    </div>
+    <button class="reply-action-btn" onclick="startReply()">↩ Responder</button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+  <img id="lightbox-img" src="">
+  <p>Toca para cerrar</p>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+const BACKEND = 'https://sechat-backend2-production.up.railway.app';
+const DURESS_PIN = '111111';
+const SALT = 'sechat_local_salt_2024_xK9#';
+const EMOJIS = ['👍','❤️','😂','😮','😢','🔥'];
+
+// ── ESTADO ─────────────────────────────────────────────────────────────────
+let sessionToken = localStorage.getItem('huum_token');
+let pinHash = localStorage.getItem('huum_pin_hash');
+let isSetup = localStorage.getItem('huum_setup') === '1';
+let pinnedRoomId = localStorage.getItem('huum_pinned');
+
+let currentRoom = null;
+let messages = [];
+let socket = null;
+let pendingImageFile = null;
+let pendingImageUri = null;
+let replyToMsg = null;
+let selectedMsgId = null;
+let calcState = { display: '0', expression: '', operand: null, operator: null, waitNext: false };
+
+// ── HASH PIN ───────────────────────────────────────────────────────────────
+async function hashPIN(pin) {
+  const enc = new TextEncoder();
+  const data = enc.encode(pin + SALT);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function genToken() {
+  return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+    (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16));
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.getElementById('black-screen').style.display = 'none';
+    document.getElementById('calc-screen').style.display = 'flex';
+  }, 800);
+});
+
+// Bloquear al ocultar la página
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) lockApp();
+});
+
+function lockApp() {
+  disconnectSocket();
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('calc-screen').style.display = 'flex';
+  calcState = { display: '0', expression: '', operand: null, operator: null, waitNext: false };
+  updateCalcDisplay();
+}
+
+// ── CALCULADORA ────────────────────────────────────────────────────────────
+let pinBuffer = '';
+
+document.querySelectorAll('.calc-btn').forEach(btn => {
+  btn.addEventListener('click', () => handleCalcBtn(btn));
+});
+
+function handleCalcBtn(btn) {
+  const action = btn.dataset.action;
+  const val = btn.dataset.val;
+
+  if (action === 'digit') {
+    pinBuffer += val;
+    if (pinBuffer.length === 6) {
+      checkPIN(pinBuffer);
+      pinBuffer = '';
+    }
+    calcDigit(val);
+  } else if (action === 'op') {
+    pinBuffer = '';
+    calcOp(val);
+  } else if (action === 'equals') {
+    pinBuffer = '';
+    calcEquals();
+  } else if (action === 'clear') {
+    pinBuffer = '';
+    calcClear();
+  } else if (action === 'sign') {
+    pinBuffer = '';
+    calcSign();
+  } else if (action === 'percent') {
+    pinBuffer = '';
+    calcPercent();
+  } else if (action === 'dot') {
+    calcDot();
+  }
+}
+
+function calcDigit(d) {
+  if (calcState.waitNext) { calcState.display = d; calcState.waitNext = false; }
+  else calcState.display = calcState.display === '0' ? d : calcState.display + d;
+  updateCalcDisplay();
+}
+function calcOp(op) {
+  calcState.operand = parseFloat(calcState.display);
+  calcState.operator = op;
+  calcState.expression = calcState.display + ' ' + op;
+  calcState.waitNext = true;
+  updateCalcDisplay();
+}
+function calcEquals() {
+  if (calcState.operator === null) return;
+  const a = calcState.operand, b = parseFloat(calcState.display);
+  let r;
+  if (calcState.operator === '+') r = a + b;
+  else if (calcState.operator === '−') r = a - b;
+  else if (calcState.operator === '×') r = a * b;
+  else if (calcState.operator === '÷') r = b !== 0 ? a / b : 'Error';
+  calcState.expression = calcState.expression + ' ' + calcState.display + ' =';
+  calcState.display = r === 'Error' ? 'Error' : String(parseFloat(r.toFixed(9)));
+  calcState.operator = null;
+  calcState.waitNext = true;
+  updateCalcDisplay();
+}
+function calcClear() { calcState = { display: '0', expression: '', operand: null, operator: null, waitNext: false }; updateCalcDisplay(); }
+function calcSign() { calcState.display = String(parseFloat(calcState.display) * -1); updateCalcDisplay(); }
+function calcPercent() { calcState.display = String(parseFloat(calcState.display) / 100); updateCalcDisplay(); }
+function calcDot() { if (!calcState.display.includes('.')) { calcState.display += '.'; updateCalcDisplay(); } }
+function updateCalcDisplay() {
+  document.getElementById('calc-result').textContent = calcState.display;
+  document.getElementById('calc-expression').textContent = calcState.expression;
+}
+
+async function checkPIN(pin) {
+  if (pin === DURESS_PIN) {
+    // Pantalla falsa
+    document.getElementById('calc-screen').style.display = 'none';
+    const black = document.getElementById('black-screen');
+    black.style.display = 'flex';
+    black.innerHTML = '<button onclick="exitDuress()" style="position:absolute;top:54px;left:16px;background:none;border:none;color:#111;font-size:26px;cursor:pointer">←</button>';
+    return;
+  }
+
+  const h = await hashPIN(pin);
+
+  if (!isSetup) {
+    // Primera vez — configurar
+    sessionToken = genToken();
+    localStorage.setItem('huum_token', sessionToken);
+    localStorage.setItem('huum_pin_hash', h);
+    localStorage.setItem('huum_setup', '1');
+    pinHash = h;
+    isSetup = true;
+    openApp();
+  } else if (h === pinHash) {
+    openApp();
+  } else {
+    // PIN incorrecto — vibrar
+    if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+    calcClear();
+  }
+}
+
+function exitDuress() {
+  const black = document.getElementById('black-screen');
+  black.style.display = 'none';
+  black.innerHTML = '';
+  document.getElementById('calc-screen').style.display = 'flex';
+}
+
+// ── ABRIR APP ─────────────────────────────────────────────────────────────
+function openApp() {
+  document.getElementById('calc-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'flex';
+  calcClear();
+  connectSocket();
+  loadRooms();
+}
+
+// ── SOCKET ─────────────────────────────────────────────────────────────────
+function connectSocket() {
+  if (socket) return;
+  socket = io(BACKEND, { transports: ['websocket'] });
+
+  socket.on('new_message', (msg) => {
+    if (!currentRoom || msg.room_id !== currentRoom.room_id) return;
+    if (messages.find(m => m.id === msg.id)) return;
+    messages.push(msg);
+    renderMessages();
+    scrollToBottom();
+  });
+
+  socket.on('reaction_updated', ({ message_id, reactions }) => {
+    const msg = messages.find(m => m.id === message_id);
+    if (msg) { msg.reactions = reactions; renderMessages(); }
+  });
+
+  socket.on('room_closed', () => {
+    alert('La sala fue eliminada.');
+    goHome();
+  });
+}
+
+function disconnectSocket() {
+  if (socket) { socket.disconnect(); socket = null; }
+}
+
+// ── ROOMS ──────────────────────────────────────────────────────────────────
+async function loadRooms() {
+  const container = document.getElementById('rooms-list');
+  container.innerHTML = '<div class="loading">Cargando...</div>';
+  try {
+    const res = await fetch(`${BACKEND}/api/rooms/my/${sessionToken}`);
+    const rooms = await res.json();
+
+    if (!rooms.length) {
+      container.innerHTML = `<div class="empty-state"><div class="icon">💬</div><h3>Sin salas activas</h3><p>Crea una sala nueva o únete con nombre y contraseña</p></div>`;
+      return;
+    }
+
+    const sorted = pinnedRoomId
+      ? [...rooms.filter(r => r.id === pinnedRoomId), ...rooms.filter(r => r.id !== pinnedRoomId)]
+      : rooms;
+
+    container.innerHTML = sorted.map(r => {
+      const isPinned = r.id === pinnedRoomId;
+      const role = r.is_creator ? 'Creador' : `Invitado ${r.member_index}`;
+      return `
+        <div class="room-card ${isPinned ? 'pinned' : ''}"
+          onclick="openRoom(${JSON.stringify(r).replace(/"/g,'&quot;')})"
+          oncontextmenu="roomContextMenu(event,'${r.id}','${isPinned}')"
+          data-id="${r.id}">
+          <div class="room-icon">${isPinned ? '★' : '#'}</div>
+          <div class="room-info">
+            <div class="room-name">${r.name}</div>
+            <div class="room-meta">${role} · máx ${r.max_users}</div>
+          </div>
+          ${r.is_creator ? `<button class="room-delete" onclick="event.stopPropagation();confirmDeleteRoomFromList('${r.id}','${r.name}')">✕</button>` : ''}
+        </div>`;
+    }).join('');
+
+    // Long press para móvil
+    document.querySelectorAll('.room-card').forEach(card => {
+      let timer;
+      card.addEventListener('touchstart', () => { timer = setTimeout(() => roomContextMenu(null, card.dataset.id, card.dataset.id === pinnedRoomId), 500); });
+      card.addEventListener('touchend', () => clearTimeout(timer));
+      card.addEventListener('touchmove', () => clearTimeout(timer));
+    });
+
+    // Auto-navegar a sala fijada (solo primera vez)
+    if (pinnedRoomId && !window._hasAutoNav) {
+      const pinned = rooms.find(r => r.id === pinnedRoomId);
+      if (pinned) { window._hasAutoNav = true; openRoom(pinned); }
+    }
+  } catch(e) {
+    container.innerHTML = '<div class="loading">Error cargando salas</div>';
+  }
+}
+
+function roomContextMenu(e, roomId, isPinned) {
+  if (e) e.preventDefault();
+  if (isPinned === 'true' || isPinned === true) {
+    if (confirm('¿Quitar sala fijada?')) { localStorage.removeItem('huum_pinned'); pinnedRoomId = null; loadRooms(); }
+  } else {
+    if (confirm('¿Fijar esta sala para abrir directo?')) { localStorage.setItem('huum_pinned', roomId); pinnedRoomId = roomId; loadRooms(); }
+  }
+}
+
+async function createRoom() {
+  const name = document.getElementById('create-name').value.trim();
+  const password = document.getElementById('create-password').value;
+  const max_users = document.getElementById('create-maxusers').value || 2;
+  const errEl = document.getElementById('create-error');
+  errEl.textContent = '';
+  if (!name || !password) { errEl.textContent = 'Completa todos los campos'; return; }
+  try {
+    const res = await fetch(`${BACKEND}/api/rooms/create`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name, password, max_users, session_token: sessionToken })
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error; return; }
+    hideModal('create-modal');
+    openRoom({ ...data, room_id: data.room_id });
+  } catch(e) { errEl.textContent = 'Error de conexión'; }
+}
+
+async function joinRoom() {
+  const name = document.getElementById('join-name').value.trim();
+  const password = document.getElementById('join-password').value;
+  const errEl = document.getElementById('join-error');
+  errEl.textContent = '';
+  if (!name || !password) { errEl.textContent = 'Completa todos los campos'; return; }
+  try {
+    const res = await fetch(`${BACKEND}/api/rooms/join`, {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name, password, session_token: sessionToken })
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error; return; }
+    hideModal('join-modal');
+    openRoom({ ...data, room_id: data.room_id });
+  } catch(e) { errEl.textContent = 'Error de conexión'; }
+}
+
+async function confirmDeleteRoomFromList(roomId, name) {
+  if (!confirm(`¿Eliminar "${name}"? Esta acción es permanente.`)) return;
+  try {
+    await fetch(`${BACKEND}/api/rooms/${roomId}`, {
+      method: 'DELETE', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ session_token: sessionToken })
+    });
+    if (pinnedRoomId === roomId) { localStorage.removeItem('huum_pinned'); pinnedRoomId = null; }
+    loadRooms();
+  } catch(e) {}
+}
+
+// ── CHAT ───────────────────────────────────────────────────────────────────
+function openRoom(room) {
+  currentRoom = { ...room, room_id: room.room_id || room.id };
+  messages = [];
+  replyToMsg = null;
+  pendingImageFile = null;
+  pendingImageUri = null;
+
+  document.getElementById('home-view').style.display = 'none';
+  document.getElementById('chat-view').style.display = 'flex';
+  document.getElementById('chat-title').textContent = '#' + currentRoom.name;
+  document.getElementById('chat-delete-btn').style.display = currentRoom.is_creator ? 'block' : 'none';
+  document.getElementById('reply-bar').style.display = 'none';
+  document.getElementById('image-preview-bar').style.display = 'none';
+  document.getElementById('msg-input').value = '';
+  updateSendBtn();
+
+  socket.emit('join_room', { room_id: currentRoom.room_id, session_token: sessionToken });
+  fetchMessages();
+}
+
+function goHome() {
+  if (currentRoom) {
+    socket.emit('leave_room', { room_id: currentRoom.room_id });
+    currentRoom = null;
+  }
+  window._hasAutoNav = true;
+  document.getElementById('chat-view').style.display = 'none';
+  document.getElementById('home-view').style.display = 'flex';
+  loadRooms();
+}
+
+async function fetchMessages() {
+  const container = document.getElementById('messages-container');
+  container.innerHTML = '<div class="loading">Cargando...</div>';
+  try {
+    const res = await fetch(`${BACKEND}/api/messages/${currentRoom.room_id}?session_token=${sessionToken}`);
+    messages = await res.json();
+    renderMessages();
+    setTimeout(scrollToBottom, 100);
+  } catch(e) {
+    container.innerHTML = '<div class="loading">Error</div>';
+  }
+}
+
+function renderMessages() {
+  const container = document.getElementById('messages-container');
+  if (!messages.length) {
+    container.innerHTML = '<div class="loading" style="color:#222">Sin mensajes · Los mensajes duran 72 horas</div>';
+    return;
+  }
+  container.innerHTML = messages.map(msg => renderMsg(msg)).join('');
+
+  // Eventos long press en burbujas
+  container.querySelectorAll('.bubble').forEach(b => {
+    let t;
+    b.addEventListener('mousedown', () => { t = setTimeout(() => openReactionModal(b.dataset.id), 500); });
+    b.addEventListener('mouseup', () => clearTimeout(t));
+    b.addEventListener('touchstart', () => { t = setTimeout(() => openReactionModal(b.dataset.id), 500); }, {passive:true});
+    b.addEventListener('touchend', () => clearTimeout(t));
+    b.addEventListener('touchmove', () => clearTimeout(t));
+  });
+}
+
+function renderMsg(msg) {
+  const isMe = msg.isMe;
+  const cls = isMe ? 'me' : 'them';
+  const reactions = msg.reactions || {};
+  const reactionEntries = Object.entries(reactions).filter(([,t]) => t.length > 0);
+  const timeLeft = getTimeLeft(msg.expires_at);
+
+  let replyHtml = '';
+  if (msg.reply_to) {
+    const rt = msg.reply_to;
+    replyHtml = `<div class="reply-preview ${isMe?'in-me':''}">
+      <div class="reply-sender">${rt.sender}</div>
+      <div class="reply-text">${rt.type==='image'?'📷 Imagen':escHtml(rt.content||'')}</div>
+    </div>`;
+  }
+
+  let bubbleContent = '';
+  if (msg.type === 'image' && msg.media_url) {
+    bubbleContent = `<img class="bubble-img" src="${msg.media_url}" onclick="openLightbox('${msg.media_url}')" loading="lazy">`;
+  } else {
+    bubbleContent = `<div class="bubble-text">${linkify(escHtml(msg.content||''))}</div>`;
+  }
+
+  const reactHtml = reactionEntries.length ? `<div class="reactions-row">${reactionEntries.map(([e,t]) =>
+    `<button class="reaction-pill ${t.includes(sessionToken)?'mine':''}" onclick="toggleReaction('${msg.id}','${e}')">${e} ${t.length}</button>`
+  ).join('')}</div>` : '';
+
+  return `<div class="msg-wrapper ${cls}">
+    ${!isMe ? `<div class="sender-label">${msg.sender}</div>` : ''}
+    ${replyHtml}
+    <div class="bubble ${cls}" data-id="${msg.id}">${bubbleContent}</div>
+    ${reactHtml}
+    ${timeLeft ? `<div class="msg-timer">⏱ ${timeLeft}</div>` : ''}
+  </div>`;
+}
+
+function getTimeLeft(expires_at) {
+  const diff = new Date(expires_at) - Date.now();
+  if (diff <= 0) return null;
+  const mins = Math.floor(diff / 60000);
+  if (mins >= 60) return Math.floor(mins/60) + 'h';
+  if (mins > 0) return mins + 'm';
+  return '<1m';
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function linkify(text) {
+  return text.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>')
+             .replace(/(www\.[^\s]+)/g, '<a href="https://$1" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+
+function scrollToBottom() {
+  const c = document.getElementById('messages-container');
+  c.scrollTop = c.scrollHeight;
+}
+
+// ── ENVIAR MENSAJE ─────────────────────────────────────────────────────────
+async function sendMessage() {
+  const text = document.getElementById('msg-input').value.trim();
+  if (!text && !pendingImageFile) return;
+
+  const reply_to_id = replyToMsg?.id || null;
+  clearReply();
+
+  if (pendingImageFile) {
+    const file = pendingImageFile;
+    clearPendingImage();
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('session_token', sessionToken);
+    formData.append('room_id', currentRoom.room_id);
+    try {
+      const res = await fetch(`${BACKEND}/api/messages/upload`, { method: 'POST', body: formData });
+      const data = await res.json();
+      socket.emit('send_message', { room_id: currentRoom.room_id, session_token: sessionToken, type: 'image', media_url: data.url, reply_to_id });
+    } catch(e) { alert('Error al subir imagen'); }
+  }
+
+  if (text) {
+    document.getElementById('msg-input').value = '';
+    autoResize(document.getElementById('msg-input'));
+    updateSendBtn();
+    socket.emit('send_message', { room_id: currentRoom.room_id, session_token: sessionToken, content: text, type: 'text', reply_to_id });
+  }
+}
+
+// Enter para enviar (Shift+Enter = nueva línea)
+document.getElementById('msg-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function updateSendBtn() {
+  const text = document.getElementById('msg-input').value.trim();
+  document.getElementById('send-btn').disabled = !text && !pendingImageFile;
+}
+
+// ── IMÁGENES ───────────────────────────────────────────────────────────────
+function openImageOptions() {
+  const choice = confirm('¿Abrir cámara?\nAceptar = Cámara · Cancelar = Galería');
+  if (choice) openCamera(); else openGallery();
+}
+
+function openCamera() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*'; input.capture = 'environment';
+  input.onchange = e => handleImageFile(e.target.files[0]);
+  input.click();
+}
+
+function openGallery() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = 'image/*';
+  input.onchange = e => handleImageFile(e.target.files[0]);
+  input.click();
+}
+
+function handleImageFile(file) {
+  if (!file) return;
+  pendingImageFile = file;
+  const url = URL.createObjectURL(file);
+  pendingImageUri = url;
+  document.getElementById('image-preview-thumb').src = url;
+  document.getElementById('image-preview-bar').style.display = 'flex';
+  updateSendBtn();
+}
+
+function clearPendingImage() {
+  pendingImageFile = null;
+  pendingImageUri = null;
+  document.getElementById('image-preview-bar').style.display = 'none';
+  document.getElementById('image-preview-thumb').src = '';
+  updateSendBtn();
+}
+
+// ── REACCIONES ─────────────────────────────────────────────────────────────
+function openReactionModal(msgId) {
+  selectedMsgId = msgId;
+  showModal('reaction-modal');
+}
+
+function addReaction(emoji) {
+  if (!selectedMsgId) return;
+  toggleReaction(selectedMsgId, emoji);
+  hideModal('reaction-modal');
+}
+
+function toggleReaction(msgId, emoji) {
+  socket.emit('add_reaction', { room_id: currentRoom.room_id, session_token: sessionToken, message_id: msgId, emoji });
+}
+
+// ── RESPONDER ──────────────────────────────────────────────────────────────
+function startReply() {
+  const msg = messages.find(m => m.id === selectedMsgId);
+  if (!msg) return;
+  hideModal('reaction-modal');
+  replyToMsg = msg;
+  document.getElementById('reply-bar-sender').textContent = 'Respondiendo a ' + msg.sender;
+  document.getElementById('reply-bar-text').textContent = msg.type === 'image' ? '📷 Imagen' : (msg.content || '');
+  document.getElementById('reply-bar').style.display = 'flex';
+  document.getElementById('msg-input').focus();
+}
+
+function clearReply() {
+  replyToMsg = null;
+  document.getElementById('reply-bar').style.display = 'none';
+}
+
+// ── ELIMINAR SALA ──────────────────────────────────────────────────────────
+async function confirmDeleteRoom() {
+  if (!confirm('¿Eliminar sala? Se borrarán todos los mensajes permanentemente.')) return;
+  try {
+    await fetch(`${BACKEND}/api/rooms/${currentRoom.room_id}`, {
+      method: 'DELETE', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ session_token: sessionToken })
+    });
+    socket.emit('notify_room_deleted', { room_id: currentRoom.room_id });
+    goHome();
+  } catch(e) {}
+}
+
+// ── LIGHTBOX ───────────────────────────────────────────────────────────────
+function openLightbox(url) {
+  document.getElementById('lightbox-img').src = url;
+  document.getElementById('lightbox').style.display = 'flex';
+}
+function closeLightbox() {
+  document.getElementById('lightbox').style.display = 'none';
+}
+
+// ── MODALES ────────────────────────────────────────────────────────────────
+function showModal(id) { document.getElementById(id).style.display = 'flex'; }
+function hideModal(id) { document.getElementById(id).style.display = 'none'; }
+function closeModalOnBg(e, id) { if (e.target.id === id) hideModal(id); }
+</script>
+</body>
+</html>
