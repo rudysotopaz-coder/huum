@@ -449,7 +449,7 @@ function connectSocket() {
   socket = io(BACKEND, { transports: ['websocket'] });
 
   socket.on('new_message', (msg) => {
-    if (!currentRoom || msg.room_id !== currentRoom.room_id) return;
+    if (!currentRoom) return;
     if (messages.find(m => m.id === msg.id)) return;
     messages.push(msg);
     renderMessages();
@@ -721,6 +721,7 @@ async function sendMessage() {
       const res = await fetch(`${BACKEND}/api/messages/upload`, { method: 'POST', body: formData });
       const data = await res.json();
       socket.emit('send_message', { room_id: currentRoom.room_id, session_token: sessionToken, type: 'image', media_url: data.url, reply_to_id });
+      setTimeout(() => fetchMessages(), 1500);
     } catch(e) { alert('Error al subir imagen'); }
   }
 
