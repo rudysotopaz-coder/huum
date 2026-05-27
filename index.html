@@ -487,6 +487,7 @@ function enterApp() {
   setTimeout(() => {
     document.getElementById('black-screen').style.display = 'none';
     document.getElementById('calc-screen').style.display = 'flex';
+    calcClear();
   }, 600);
 }
 
@@ -533,11 +534,21 @@ async function sendReport() {
   }
 }
 
-// Mostrar landing al cargar (no black screen)
+// Mostrar calculadora por defecto, landing solo con ?info
 window.addEventListener('load', () => {
-  document.getElementById('black-screen').style.display = 'none';
-  document.getElementById('landing-screen').style.display = 'flex';
   generateCaptcha();
+  if (window.location.search.includes('info')) {
+    // Mostrar landing pública
+    document.getElementById('black-screen').style.display = 'none';
+    document.getElementById('landing-screen').style.display = 'flex';
+  } else {
+    // Pantalla negra → calculadora (nadie sabe que es Huum)
+    document.getElementById('landing-screen').style.display = 'none';
+    setTimeout(() => {
+      document.getElementById('black-screen').style.display = 'none';
+      document.getElementById('calc-screen').style.display = 'flex';
+    }, 800);
+  }
 });
 
 
