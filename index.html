@@ -298,7 +298,7 @@
       <div class="header-actions">
         <button class="btn-secondary" onclick="showModal('join-modal')">Unirse</button>
           <button class="btn-primary" onclick="showModal('create-modal')">+ Nueva</button>
-          <button onclick="openInfo()" style="width:40px;height:40px;background:#1e1e1e;border:1px solid #333;border-radius:50%;color:#fff;font-size:18px;font-weight:700;cursor:pointer;flex-shrink:0">ℹ</button>
+          <button onclick="openInfo()" style="width:60px;height:60px;background:#fff;border:none;border-radius:50%;color:#000;font-size:26px;font-weight:900;cursor:pointer;flex-shrink:0;box-shadow:0 2px 12px rgba(255,255,255,0.15)">ℹ</button>
       </div>
     </div>
     <div id="rooms-list"></div>
@@ -847,11 +847,24 @@ function connectSocket() {
     messages.push(msg);
     renderMessages();
     scrollToBottom();
+    // Si es read_once y no soy el remitente, emitir message_read
+    if (msg.read_once && !msg.isMe) {
+      socket.emit('message_read', {
+        message_id: msg.id,
+        room_id: currentRoom.room_id,
+        session_token: sessionToken
+      });
+    }
   });
 
   socket.on('reaction_updated', ({ message_id, reactions }) => {
     const msg = messages.find(m => m.id === message_id);
     if (msg) { msg.reactions = reactions; renderMessages(); }
+  });
+
+  socket.on('message_deleted', ({ message_id }) => {
+    messages = messages.filter(m => m.id !== message_id);
+    renderMessages();
   });
 
   socket.on('message_deleted', ({ message_id }) => {
@@ -1045,6 +1058,16 @@ async function fetchMessages() {
     messages = await res.json();
     renderMessages();
     setTimeout(scrollToBottom, 100);
+    // Emitir message_read para read_once existentes
+    messages.forEach(msg => {
+      if (msg.read_once && !msg.isMe) {
+        socket.emit('message_read', {
+          message_id: msg.id,
+          room_id: currentRoom.room_id,
+          session_token: sessionToken
+        });
+      }
+    });
   } catch(e) {
     container.innerHTML = '<div class="loading">Error</div>';
   }
@@ -1100,12 +1123,13 @@ function renderMsg(msg) {
     `<button class="reaction-pill ${t.includes(sessionToken)?'mine':''}" onclick="toggleReaction('${msg.id}','${e}')">${e} ${t.length}</button>`
   ).join('')}</div>` : '';
 
+  const readOnceHtml = msg.read_once ? `<div class="msg-timer">👁 Se borra al leer</div>` : '';
   return `<div class="msg-wrapper ${cls}">
     ${!isMe ? `<div class="sender-label">${msg.sender}</div>` : ''}
     ${replyHtml}
     <div class="bubble ${cls}" data-id="${msg.id}">${bubbleContent}</div>
     ${reactHtml}
-    ${timeLeft ? `<div class="msg-timer">⏱ ${timeLeft}</div>` : ''}
+    ${msg.read_once ? readOnceHtml : (timeLeft ? `<div class="msg-timer">⏱ ${timeLeft}</div>` : '')}
   </div>`;
 }
 
