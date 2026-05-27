@@ -137,6 +137,11 @@
   /* Loading */
   .loading { display: flex; align-items: center; justify-content: center; flex: 1; color: #333; }
 
+  .color-opt {
+    width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; transition: border-color 0.15s;
+  }
+  .color-opt.selected { border-color: #fff; }
   .reg-dot {
     width: 15px; height: 15px; border-radius: 50%;
     border: 2px solid #333; background: transparent;
@@ -153,6 +158,75 @@
 </style>
 </head>
 <body>
+
+<!-- LANDING PAGE -->
+<div id="landing-screen" style="display:flex;flex-direction:column;min-height:100dvh;background:#000;overflow-y:auto">
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #111">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:#000">H</div>
+      <span style="color:#fff;font-size:18px;font-weight:700;letter-spacing:1px">Huum</span>
+    </div>
+    <button onclick="enterApp()" style="background:#fff;color:#000;border:none;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;cursor:pointer">Abrir app</button>
+  </div>
+
+  <!-- Hero -->
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 24px;text-align:center">
+    <div style="width:80px;height:80px;background:#fff;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:#000;margin-bottom:32px">H</div>
+    <h1 style="color:#fff;font-size:42px;font-weight:800;margin-bottom:16px;letter-spacing:-1px">Huum</h1>
+    <p style="color:#555;font-size:18px;max-width:400px;line-height:1.6;margin-bottom:48px">Mensajería privada y segura. Sin registros, sin datos personales, sin rastro.</p>
+    
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:64px">
+      <button onclick="enterApp()" style="background:#fff;color:#000;border:none;padding:16px 32px;border-radius:24px;font-size:16px;font-weight:700;cursor:pointer">Entrar a Huum</button>
+      <button onclick="scrollToReport()" style="background:transparent;color:#555;border:1px solid #222;padding:16px 32px;border-radius:24px;font-size:16px;cursor:pointer">Reportar problema</button>
+    </div>
+
+    <!-- Features -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;width:100%;max-width:700px;margin-bottom:64px">
+      <div style="background:#0d0d0d;border:1px solid #111;border-radius:16px;padding:24px">
+        <div style="font-size:28px;margin-bottom:12px">🔒</div>
+        <div style="color:#fff;font-weight:600;margin-bottom:8px">Privacidad total</div>
+        <div style="color:#444;font-size:13px;line-height:1.5">Sin nombre, sin email, sin número de teléfono</div>
+      </div>
+      <div style="background:#0d0d0d;border:1px solid #111;border-radius:16px;padding:24px">
+        <div style="font-size:28px;margin-bottom:12px">⏱</div>
+        <div style="color:#fff;font-weight:600;margin-bottom:8px">Mensajes efímeros</div>
+        <div style="color:#444;font-size:13px;line-height:1.5">🔒 Solo tú y los miembros de esta sala pueden leer estos mensajes automáticamente</div>
+      </div>
+      <div style="background:#0d0d0d;border:1px solid #111;border-radius:16px;padding:24px">
+        <div style="font-size:28px;margin-bottom:12px">🛡</div>
+        <div style="color:#fff;font-weight:600;margin-bottom:8px">PIN de acceso</div>
+        <div style="color:#444;font-size:13px;line-height:1.5">Tu app protegida con PIN. Sin acceso, sin datos.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Report section -->
+  <div id="report-section" style="padding:40px 24px;border-top:1px solid #111;background:#050505">
+    <div style="max-width:480px;margin:0 auto">
+      <h2 style="color:#fff;font-size:22px;font-weight:700;margin-bottom:8px">Reportar un problema</h2>
+      <p style="color:#444;font-size:14px;margin-bottom:24px">¿Encontraste algo que no funciona? Cuéntanos.</p>
+      
+      <textarea id="report-text" placeholder="Describe el problema..." style="width:100%;background:#0d0d0d;border:1px solid #1e1e1e;border-radius:12px;padding:14px 16px;color:#fff;font-size:14px;resize:vertical;min-height:100px;outline:none;font-family:inherit;margin-bottom:12px"></textarea>
+      
+      <!-- CAPTCHA -->
+      <div style="background:#0d0d0d;border:1px solid #1e1e1e;border-radius:12px;padding:14px 16px;margin-bottom:12px;display:flex;align-items:center;gap:12px">
+        <span id="captcha-question" style="color:#fff;font-size:15px;flex:1"></span>
+        <input id="captcha-input" type="number" placeholder="?" style="width:60px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:8px;padding:8px;color:#fff;font-size:15px;text-align:center;outline:none">
+      </div>
+      
+      <div id="report-error" style="color:#ff3b30;font-size:13px;margin-bottom:10px;min-height:18px"></div>
+      <div id="report-success" style="color:#30d158;font-size:13px;margin-bottom:10px;min-height:18px;display:none">✓ Reporte enviado. Gracias.</div>
+      
+      <button onclick="sendReport()" style="width:100%;background:#fff;color:#000;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer">Enviar reporte</button>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div style="padding:20px 24px;text-align:center;border-top:1px solid #0d0d0d">
+    <span style="color:#222;font-size:12px">© 2025 Huum · Mensajería privada</span>
+  </div>
+</div>
 
 <!-- PANTALLA NEGRA INICIAL -->
 <div id="black-screen"></div>
@@ -265,8 +339,39 @@
     <input class="modal-input" id="create-name" placeholder="Nombre de la sala" maxlength="30">
     <input class="modal-input" id="create-password" placeholder="Contraseña" type="password" maxlength="50">
     <input class="modal-input" id="create-maxusers" placeholder="Máx usuarios (2-20)" type="number" min="2" max="20" value="2">
+    
+    <div style="margin-bottom:12px">
+      <div style="color:#444;font-size:12px;margin-bottom:8px">Duración de mensajes</div>
+      <select class="modal-input" id="create-duration" style="margin-bottom:0">
+        <option value="0">Al leer (se borra cuando el destinatario lo abre)</option>
+        <option value="1">1 hora</option>
+        <option value="6">6 horas</option>
+        <option value="12">12 horas</option>
+        <option value="24">24 horas</option>
+        <option value="48" selected>48 horas (máximo)</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:12px">
+      <div style="color:#444;font-size:12px;margin-bottom:8px">Color de sala</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="color-picker">
+        <div class="color-opt selected" data-color="#ffffff" style="background:#ffffff" onclick="selectColor(this)"></div>
+        <div class="color-opt" data-color="#ff6b6b" style="background:#ff6b6b" onclick="selectColor(this)"></div>
+        <div class="color-opt" data-color="#4ecdc4" style="background:#4ecdc4" onclick="selectColor(this)"></div>
+        <div class="color-opt" data-color="#45b7d1" style="background:#45b7d1" onclick="selectColor(this)"></div>
+        <div class="color-opt" data-color="#96ceb4" style="background:#96ceb4" onclick="selectColor(this)"></div>
+        <div class="color-opt" data-color="#feca57" style="background:#feca57" onclick="selectColor(this)"></div>
+        <div class="color-opt" data-color="#ff9ff3" style="background:#ff9ff3" onclick="selectColor(this)"></div>
+        <div class="color-opt" data-color="#54a0ff" style="background:#54a0ff" onclick="selectColor(this)"></div>
+      </div>
+    </div>
+
+    <div style="background:#0d0d0d;border:1px solid #1a1a1a;border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="color:#333;font-size:12px;line-height:1.5">⚠️ Esta sala se eliminará automáticamente si no tiene actividad por 7 días.</div>
+    </div>
+
     <div class="modal-error" id="create-error"></div>
-    <button class="modal-btn modal-btn-primary" onclick="createRoom()">Crear</button>
+    <button class="modal-btn modal-btn-primary" onclick="createRoom()">Crear sala privada</button>
     <button class="modal-btn modal-btn-cancel" onclick="hideModal('create-modal')">Cancelar</button>
   </div>
 </div>
@@ -315,6 +420,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
 <script>
 const BACKEND = 'https://sechat-backend2-production.up.railway.app';
+const REPORT_URL = BACKEND + '/api/report';
 const DURESS_PIN = '111111';
 const REGISTER_PIN = '222222';
 const SALT = 'sechat_local_salt_2024_xK9#';
@@ -351,12 +457,89 @@ function genToken() {
 }
 
 // ── INIT ───────────────────────────────────────────────────────────────────
-window.addEventListener('load', () => {
+
+// ── LANDING ────────────────────────────────────────────────────────────────
+let captchaExpected = 0;
+
+function generateCaptcha() {
+  const a = Math.floor(Math.random() * 9) + 1;
+  const b = Math.floor(Math.random() * 9) + 1;
+  const ops = ['+', '-', '×'];
+  const op = ops[Math.floor(Math.random() * ops.length)];
+  let answer;
+  if (op === '+') answer = a + b;
+  else if (op === '-') answer = Math.max(a,b) - Math.min(a,b);
+  else answer = a * b;
+  const q = op === '-' ? `${Math.max(a,b)} - ${Math.min(a,b)}` : `${a} ${op} ${b}`;
+  captchaExpected = answer;
+  document.getElementById('captcha-question').textContent = `¿Cuánto es ${q}?`;
+  document.getElementById('captcha-input').value = '';
+}
+
+function scrollToReport() {
+  document.getElementById('report-section').scrollIntoView({ behavior: 'smooth' });
+  generateCaptcha();
+}
+
+function enterApp() {
+  document.getElementById('landing-screen').style.display = 'none';
+  document.getElementById('black-screen').style.display = 'flex';
   setTimeout(() => {
     document.getElementById('black-screen').style.display = 'none';
     document.getElementById('calc-screen').style.display = 'flex';
-  }, 800);
+  }, 600);
+}
+
+async function sendReport() {
+  const message = document.getElementById('report-text').value.trim();
+  const captchaAnswer = document.getElementById('captcha-input').value;
+  const errEl = document.getElementById('report-error');
+  const successEl = document.getElementById('report-success');
+  errEl.textContent = '';
+  successEl.style.display = 'none';
+
+  if (!message || message.length < 10) {
+    errEl.textContent = 'El mensaje es muy corto (mínimo 10 caracteres).';
+    return;
+  }
+
+  if (parseInt(captchaAnswer) !== captchaExpected) {
+    errEl.textContent = 'Respuesta incorrecta. Intenta de nuevo.';
+    generateCaptcha();
+    return;
+  }
+
+  try {
+    const res = await fetch(REPORT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        captcha_answer: captchaAnswer,
+        captcha_expected: captchaExpected
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Error enviando reporte.';
+      generateCaptcha();
+      return;
+    }
+    document.getElementById('report-text').value = '';
+    successEl.style.display = 'block';
+    generateCaptcha();
+  } catch(e) {
+    errEl.textContent = 'Error de conexión. Intenta más tarde.';
+  }
+}
+
+// Mostrar landing al cargar (no black screen)
+window.addEventListener('load', () => {
+  document.getElementById('black-screen').style.display = 'none';
+  document.getElementById('landing-screen').style.display = 'flex';
+  generateCaptcha();
 });
+
 
 // Bloquear al ocultar la página
 document.addEventListener('visibilitychange', () => {
@@ -571,6 +754,7 @@ function openApp() {
   calcClear();
   connectSocket();
   loadRooms();
+  checkVersion();
 }
 
 // ── SOCKET ─────────────────────────────────────────────────────────────────
@@ -589,6 +773,11 @@ function connectSocket() {
   socket.on('reaction_updated', ({ message_id, reactions }) => {
     const msg = messages.find(m => m.id === message_id);
     if (msg) { msg.reactions = reactions; renderMessages(); }
+  });
+
+  socket.on('message_deleted', ({ message_id }) => {
+    messages = messages.filter(m => m.id !== message_id);
+    renderMessages();
   });
 
   socket.on('room_closed', () => {
@@ -662,17 +851,39 @@ function roomContextMenu(e, roomId, isPinned) {
   }
 }
 
+function selectColor(el) {
+  document.querySelectorAll('.color-opt').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function checkVersion() {
+  try {
+    const res = await fetch(`${BACKEND}/api/version`);
+    const data = await res.json();
+    const currentVersion = '2.0.0';
+    if (data.web && data.web !== currentVersion) {
+      const banner = document.createElement('div');
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#1a1a1a;border-bottom:1px solid #333;padding:10px 16px;text-align:center;font-size:13px;color:#aaa;z-index:999';
+      banner.textContent = '⬆️ Actualización disponible — recarga la página';
+      document.body.appendChild(banner);
+    }
+  } catch {}
+}
+
 async function createRoom() {
   const name = document.getElementById('create-name').value.trim();
   const password = document.getElementById('create-password').value;
   const max_users = document.getElementById('create-maxusers').value || 2;
+  const message_duration = parseInt(document.getElementById('create-duration').value);
+  const colorEl = document.querySelector('.color-opt.selected');
+  const color = colorEl ? colorEl.dataset.color : '#ffffff';
   const errEl = document.getElementById('create-error');
   errEl.textContent = '';
   if (!name || !password) { errEl.textContent = 'Completa todos los campos'; return; }
   try {
     const res = await fetch(`${BACKEND}/api/rooms/create`, {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ name, password, max_users, session_token: sessionToken })
+      body: JSON.stringify({ name, password, max_users, message_duration, color, session_token: sessionToken })
     });
     const data = await res.json();
     if (!res.ok) { errEl.textContent = data.error; return; }
@@ -723,6 +934,10 @@ function openRoom(room) {
   document.getElementById('chat-view').style.display = 'flex';
   document.getElementById('chat-title').textContent = '#' + currentRoom.name;
   document.getElementById('chat-delete-btn').style.display = currentRoom.is_creator ? 'block' : 'none';
+  
+  // Apply room color accent
+  const color = currentRoom.color || '#ffffff';
+  document.querySelector('.chat-header').style.borderBottomColor = color === '#ffffff' ? '#181818' : color + '33';
   document.getElementById('reply-bar').style.display = 'none';
   document.getElementById('image-preview-bar').style.display = 'none';
   document.getElementById('msg-input').value = '';
@@ -759,7 +974,11 @@ async function fetchMessages() {
 function renderMessages() {
   const container = document.getElementById('messages-container');
   if (!messages.length) {
-    container.innerHTML = '<div class="loading" style="color:#222">Sin mensajes · Los mensajes duran 72 horas</div>';
+    container.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center">
+      <div style="font-size:28px;margin-bottom:12px">🔒</div>
+      <div style="color:#333;font-size:14px;font-weight:600;margin-bottom:6px">Mensajes privados y cifrados</div>
+      <div style="color:#222;font-size:12px;line-height:1.6;max-width:260px">Solo los miembros de esta sala pueden leerlos. Desaparecen automáticamente.</div>
+    </div>`;
     return;
   }
   container.innerHTML = messages.map(msg => renderMsg(msg)).join('');
