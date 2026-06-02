@@ -309,7 +309,10 @@
   <div id="chat-view">
     <div class="chat-header">
       <button class="chat-back" onclick="goHome()">←</button>
+      <div style="display:flex;flex-direction:column;align-items:center;flex:1">
       <span class="chat-title" id="chat-title"></span>
+      <span id="chat-e2e-badge" style="display:none;font-size:10px;color:#30d158;margin-top:2px">🔒 E2E cifrado</span>
+    </div>
       <button class="chat-delete" id="chat-delete-btn" onclick="confirmDeleteRoom()" style="display:none">🗑</button>
     </div>
     <div id="messages-container"></div>
@@ -486,19 +489,130 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl-fast.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl-util/0.15.1/nacl-util.min.js"></script>
 <script>
 const BACKEND = 'https://sechat-backend2-production.up.railway.app';
 const REPORT_URL = BACKEND + '/api/report';
+
+// ── STORAGE ROBUSTO ─────────────────────────────────────────────────────────
+function storeSave(key, value) {
+  try { localStorage.setItem(key, value); } catch {}
+  try { sessionStorage.setItem(key, value); } catch {}
+}
+function storeGet(key) {
+  try { const v = localStorage.getItem(key); if (v) return v; } catch {}
+  try { return sessionStorage.getItem(key); } catch {}
+  return null;
+}
+function storeRemove(key) {
+  try { localStorage.removeItem(key); } catch {}
+  try { sessionStorage.removeItem(key); } catch {}
+}
+
+// ── E2E ENCRYPTION ──────────────────────────────────────────────────────────
+const E2E_PREFIX = 'E2E_v1:';
+const roomKeys = {}; // { room_id: Uint8Array }
+
+async function deriveRoomKey(password, roomId) {
+  const enc = new TextEncoder();
+  const keyString = password + '::' + roomId + '::huum_e2e_2024';
+  const hashBuffer = await crypto.subtle.digest('SHA-256', enc.encode(keyString));
+  return new Uint8Array(hashBuffer); // 32 bytes
+}
+
+async function deriveAndStoreKey(password, roomId) {
+  const key = await deriveRoomKey(password, roomId);
+  roomKeys[roomId] = key;
+  return key;
+}
+
+function getRoomKey(roomId) {
+  return roomKeys[roomId] || null;
+}
+
+function encryptText(text, key) {
+  try {
+    const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+    const message = nacl.util.decodeUTF8(text);
+    const encrypted = nacl.secretbox(message, nonce, key);
+    const combined = new Uint8Array(nonce.length + encrypted.length);
+    combined.set(nonce);
+    combined.set(encrypted, nonce.length);
+    return E2E_PREFIX + nacl.util.encodeBase64(combined);
+  } catch { return text; }
+}
+
+function decryptText(encoded, key) {
+  try {
+    if (!encoded || !encoded.startsWith(E2E_PREFIX)) return encoded;
+    const combined = nacl.util.decodeBase64(encoded.slice(E2E_PREFIX.length));
+    const nonce = combined.slice(0, nacl.secretbox.nonceLength);
+    const ciphertext = combined.slice(nacl.secretbox.nonceLength);
+    const decrypted = nacl.secretbox.open(ciphertext, nonce, key);
+    if (!decrypted) return '🔒 [No se pudo descifrar]';
+    return nacl.util.encodeUTF8(decrypted);
+  } catch { return '🔒 [Error]'; }
+}
+
+function encryptBinary(base64Data, key) {
+  try {
+    const bytes = nacl.util.decodeBase64(base64Data);
+    const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+    const encrypted = nacl.secretbox(bytes, nonce, key);
+    const combined = new Uint8Array(nonce.length + encrypted.length);
+    combined.set(nonce);
+    combined.set(encrypted, nonce.length);
+    return E2E_PREFIX + nacl.util.encodeBase64(combined);
+  } catch { return null; }
+}
+
+function decryptBinary(encoded, key) {
+  try {
+    if (!encoded || !encoded.startsWith(E2E_PREFIX)) return null;
+    const combined = nacl.util.decodeBase64(encoded.slice(E2E_PREFIX.length));
+    const nonce = combined.slice(0, nacl.secretbox.nonceLength);
+    const ciphertext = combined.slice(nacl.secretbox.nonceLength);
+    const decrypted = nacl.secretbox.open(ciphertext, nonce, key);
+    if (!decrypted) return null;
+    return nacl.util.encodeBase64(decrypted);
+  } catch { return null; }
+}
+
+function isE2E(content) {
+  return content && content.startsWith(E2E_PREFIX);
+}
+
+// Descifrar un mensaje entrante
+function decryptIncoming(msg) {
+  const key = getRoomKey(currentRoom?.room_id);
+  if (!key) return msg;
+  const dec = { ...msg };
+  if (msg.type === 'text' && msg.content) {
+    dec.content = decryptText(msg.content, key);
+  }
+  if (msg.type === 'image_e2e' && msg.content) {
+    const b64 = decryptBinary(msg.content, key);
+    if (b64) {
+      dec.localImageData = 'data:image/jpeg;base64,' + b64;
+      dec.type = 'image';
+    }
+  }
+  if (msg.reply_to?.content) {
+    dec.reply_to = { ...msg.reply_to, content: decryptText(msg.reply_to.content, key) };
+  }
+  return dec;
+}
+const REPORT_URL = BACKEND + '/api/report';
 const DURESS_PIN = '111111';
-const REGISTER_PIN = '222222';
 const SALT = 'sechat_local_salt_2024_xK9#';
 const EMOJIS = ['👍','❤️','😂','😮','😢','🔥'];
 
 // ── ESTADO ─────────────────────────────────────────────────────────────────
-let sessionToken = localStorage.getItem('huum_token');
-let pinHash = localStorage.getItem('huum_pin_hash');
-let isSetup = localStorage.getItem('huum_setup') === '1';
-let pinnedRoomId = localStorage.getItem('huum_pinned');
+let sessionToken = storeGet('huum_token');
+let pinHash = storeGet('huum_pin_hash');
+let isSetup = storeGet('huum_setup') === '1';
+let pinnedRoomId = storeGet('huum_pinned');
 
 let currentRoom = null;
 let messages = [];
@@ -508,8 +622,6 @@ let pendingImageUri = null;
 let replyToMsg = null;
 let selectedMsgId = null;
 let calcState = { display: '0', expression: '', operand: null, operator: null, waitNext: false };
-let registerStep = 0;
-let registerNewPIN = '';
 
 // ── HASH PIN ───────────────────────────────────────────────────────────────
 async function hashPIN(pin) {
@@ -627,6 +739,8 @@ document.addEventListener('visibilitychange', () => {
 
 function lockApp() {
   disconnectSocket();
+  // Limpiar claves E2E de memoria
+  Object.keys(roomKeys).forEach(k => delete roomKeys[k]);
   document.getElementById('app-screen').style.display = 'none';
   document.getElementById('calc-screen').style.display = 'flex';
   calcState = { display: '0', expression: '', operand: null, operator: null, waitNext: false };
@@ -715,18 +829,14 @@ async function checkPIN(pin) {
     return;
   }
 
-  if (pin === REGISTER_PIN) {
-    showRegisterScreen();
-    return;
-  }
 
   const h = await hashPIN(pin);
 
   if (!isSetup) {
     sessionToken = genToken();
-    localStorage.setItem('huum_token', sessionToken);
-    localStorage.setItem('huum_pin_hash', h);
-    localStorage.setItem('huum_setup', '1');
+    storeSave('huum_token', sessionToken);
+    storeSave('huum_pin_hash', h);
+    storeSave('huum_setup', '1');
     pinHash = h;
     isSetup = true;
     openApp();
@@ -771,7 +881,7 @@ async function registerDigit(d) {
 
   if (registerNewPIN.length === 6) {
     if (registerStep === 1) {
-      if (registerNewPIN === DURESS_PIN || registerNewPIN === REGISTER_PIN) {
+      if (registerNewPIN === DURESS_PIN || registerNewPIN === '______DISABLED______') {
         alert('Ese PIN no está disponible. Elige otro.');
         registerNewPIN = '';
         updateRegisterDisplay();
@@ -785,10 +895,10 @@ async function registerDigit(d) {
       if (registerNewPIN === window._regFirstPIN) {
         const h = await hashPIN(registerNewPIN);
         sessionToken = genToken();
-        localStorage.setItem('huum_token', sessionToken);
-        localStorage.setItem('huum_pin_hash', h);
-        localStorage.setItem('huum_setup', '1');
-        localStorage.removeItem('huum_pinned');
+        storeSave('huum_token', sessionToken);
+        storeSave('huum_pin_hash', h);
+        storeSave('huum_setup', '1');
+        storeRemove('huum_pinned');
         pinHash = h;
         isSetup = true;
         pinnedRoomId = null;
@@ -844,10 +954,10 @@ function connectSocket() {
   socket.on('new_message', (msg) => {
     if (!currentRoom) return;
     if (messages.find(m => m.id === msg.id)) return;
-    messages.push(msg);
+    const decrypted = decryptIncoming(msg);
+    messages.push(decrypted);
     renderMessages();
     scrollToBottom();
-    // Si es read_once y no soy el remitente, emitir message_read
     if (msg.read_once && !msg.isMe) {
       socket.emit('message_read', {
         message_id: msg.id,
@@ -883,11 +993,12 @@ function disconnectSocket() {
 }
 
 // ── ROOMS ──────────────────────────────────────────────────────────────────
-async function loadRooms() {
+async function loadRooms(retries = 3) {
   const container = document.getElementById('rooms-list');
   container.innerHTML = '<div class="loading">Cargando...</div>';
   try {
     const res = await fetch(`${BACKEND}/api/rooms/my/${sessionToken}`);
+    if (!res.ok) throw new Error('Error ' + res.status);
     const rooms = await res.json();
 
     if (!rooms.length) {
@@ -930,16 +1041,20 @@ async function loadRooms() {
       if (pinned) { window._hasAutoNav = true; openRoom(pinned); }
     }
   } catch(e) {
-    container.innerHTML = '<div class="loading">Error cargando salas</div>';
+    if (retries > 1) {
+      setTimeout(() => loadRooms(retries - 1), 2000);
+    } else {
+      container.innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><h3>Error de conexión</h3><p><button onclick="loadRooms()" style="background:#fff;color:#000;border:none;padding:8px 16px;border-radius:10px;cursor:pointer;font-size:13px">Reintentar</button></p></div>`;
+    }
   }
 }
 
 function roomContextMenu(e, roomId, isPinned) {
   if (e) e.preventDefault();
   if (isPinned === 'true' || isPinned === true) {
-    if (confirm('¿Quitar sala fijada?')) { localStorage.removeItem('huum_pinned'); pinnedRoomId = null; loadRooms(); }
+    if (confirm('¿Quitar sala fijada?')) { storeRemove('huum_pinned'); pinnedRoomId = null; loadRooms(); }
   } else {
-    if (confirm('¿Fijar esta sala para abrir directo?')) { localStorage.setItem('huum_pinned', roomId); pinnedRoomId = roomId; loadRooms(); }
+    if (confirm('¿Fijar esta sala para abrir directo?')) { storeSave('huum_pinned', roomId); pinnedRoomId = roomId; loadRooms(); }
   }
 }
 
@@ -979,6 +1094,8 @@ async function createRoom() {
     });
     const data = await res.json();
     if (!res.ok) { errEl.textContent = data.error; return; }
+    // Derivar clave E2E
+    await deriveAndStoreKey(password, data.room_id);
     hideModal('create-modal');
     openRoom({ ...data, room_id: data.room_id });
   } catch(e) { errEl.textContent = 'Error de conexión'; }
@@ -997,6 +1114,9 @@ async function joinRoom() {
     });
     const data = await res.json();
     if (!res.ok) { errEl.textContent = data.error; return; }
+    // Derivar clave E2E
+    const joinPassword = document.getElementById('join-password').value;
+    await deriveAndStoreKey(joinPassword, data.room_id);
     hideModal('join-modal');
     openRoom({ ...data, room_id: data.room_id });
   } catch(e) { errEl.textContent = 'Error de conexión'; }
@@ -1009,7 +1129,7 @@ async function confirmDeleteRoomFromList(roomId, name) {
       method: 'DELETE', headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ session_token: sessionToken })
     });
-    if (pinnedRoomId === roomId) { localStorage.removeItem('huum_pinned'); pinnedRoomId = null; }
+    if (pinnedRoomId === roomId) { storeRemove('huum_pinned'); pinnedRoomId = null; }
     loadRooms();
   } catch(e) {}
 }
@@ -1025,6 +1145,8 @@ function openRoom(room) {
   document.getElementById('home-view').style.display = 'none';
   document.getElementById('chat-view').style.display = 'flex';
   document.getElementById('chat-title').textContent = '#' + currentRoom.name;
+  const e2eEl = document.getElementById('chat-e2e-badge');
+  if (e2eEl) e2eEl.style.display = getRoomKey(currentRoom.room_id) ? 'block' : 'none';
   document.getElementById('chat-delete-btn').style.display = currentRoom.is_creator ? 'block' : 'none';
   
   // Apply room color accent
@@ -1055,10 +1177,10 @@ async function fetchMessages() {
   container.innerHTML = '<div class="loading">Cargando...</div>';
   try {
     const res = await fetch(`${BACKEND}/api/messages/${currentRoom.room_id}?session_token=${sessionToken}`);
-    messages = await res.json();
+    const rawMessages = await res.json();
+    messages = rawMessages.map(msg => decryptIncoming(msg));
     renderMessages();
     setTimeout(scrollToBottom, 100);
-    // Emitir message_read para read_once existentes
     messages.forEach(msg => {
       if (msg.read_once && !msg.isMe) {
         socket.emit('message_read', {
@@ -1113,8 +1235,10 @@ function renderMsg(msg) {
   }
 
   let bubbleContent = '';
-  if (msg.type === 'image' && msg.media_url) {
-    bubbleContent = `<img class="bubble-img" src="${msg.media_url}" onclick="openLightbox('${msg.media_url}')" loading="lazy">`;
+  const imgSrc = msg.localImageData || msg.media_url;
+  if ((msg.type === 'image' || msg.type === 'image_e2e') && imgSrc) {
+    const e2eBadge = msg.localImageData ? '<div style="position:absolute;bottom:6px;right:6px;background:rgba(0,0,0,0.5);border-radius:8px;padding:2px 5px;font-size:10px">🔒</div>' : '';
+    bubbleContent = `<div style="position:relative;display:inline-block"><img class="bubble-img" src="${imgSrc}" onclick="openLightbox('${imgSrc}')" loading="lazy">${e2eBadge}</div>`;
   } else {
     bubbleContent = `<div class="bubble-text">${linkify(escHtml(msg.content||''))}</div>`;
   }
@@ -1170,9 +1294,25 @@ async function sendMessage() {
     formData.append('session_token', sessionToken);
     formData.append('room_id', currentRoom.room_id);
     try {
-      const res = await fetch(`${BACKEND}/api/messages/upload`, { method: 'POST', body: formData });
-      const data = await res.json();
-      socket.emit('send_message', { room_id: currentRoom.room_id, session_token: sessionToken, type: 'image', media_url: data.url, reply_to_id });
+      const key = getRoomKey(currentRoom.room_id);
+      // Intentar E2E si imagen no es muy grande (< 400KB)
+      if (key && file.size < 400 * 1024) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const base64 = e.target.result.split(',')[1];
+          const encrypted = encryptBinary(base64, key);
+          if (encrypted) {
+            socket.emit('send_message', { room_id: currentRoom.room_id, session_token: sessionToken, type: 'image_e2e', content: encrypted, reply_to_id });
+            return;
+          }
+        };
+        reader.readAsDataURL(file);
+      } else {
+        // Imagen grande → Cloudinary
+        const res = await fetch(`${BACKEND}/api/messages/upload`, { method: 'POST', body: formData });
+        const data = await res.json();
+        socket.emit('send_message', { room_id: currentRoom.room_id, session_token: sessionToken, type: 'image', media_url: data.url, reply_to_id });
+      }
       setTimeout(() => fetchMessages(), 1500);
       setTimeout(() => fetchMessages(), 1500);
     } catch(e) { alert('Error al subir imagen'); }
@@ -1182,7 +1322,9 @@ async function sendMessage() {
     document.getElementById('msg-input').value = '';
     autoResize(document.getElementById('msg-input'));
     updateSendBtn();
-    socket.emit('send_message', { room_id: currentRoom.room_id, session_token: sessionToken, content: text, type: 'text', reply_to_id });
+    const key = getRoomKey(currentRoom.room_id);
+    const encText = key ? encryptText(text, key) : text;
+    socket.emit('send_message', { room_id: currentRoom.room_id, session_token: sessionToken, content: encText, type: 'text', reply_to_id });
   }
 }
 
