@@ -289,6 +289,10 @@
   </div>
 </div>
 
+<!-- Indicador PIN invisible (puntos sutiles) -->
+<div id="pin-dots-row" style="display:flex;justify-content:center;gap:10px;margin-top:16px;height:8px">
+</div>
+
 <!-- APP -->
 <div id="app-screen">
   <!-- HOME -->
@@ -749,6 +753,14 @@ function lockApp() {
 // ── CALCULADORA ────────────────────────────────────────────────────────────
 let pinBuffer = '';
 
+function updatePINDots() {
+  const row = document.getElementById('pin-dots-row');
+  if (!row) return;
+  row.innerHTML = Array(6).fill(null).map((_, i) =>
+    `<div style="width:6px;height:6px;border-radius:50%;background:${i < pinBuffer.length ? '#555' : '#1a1a1a'}"></div>`
+  ).join('');
+}
+
 document.querySelectorAll('.calc-btn').forEach(btn => {
   btn.addEventListener('click', () => handleCalcBtn(btn));
 });
@@ -759,19 +771,23 @@ function handleCalcBtn(btn) {
 
   if (action === 'digit') {
     pinBuffer += val;
+    updatePINDots();
     if (pinBuffer.length === 6) {
       checkPIN(pinBuffer);
       pinBuffer = '';
+      updatePINDots();
     }
     calcDigit(val);
   } else if (action === 'op') {
     pinBuffer = '';
+    updatePINDots();
     calcOp(val);
   } else if (action === 'equals') {
     pinBuffer = '';
     calcEquals();
   } else if (action === 'clear') {
     pinBuffer = '';
+    updatePINDots();
     calcClear();
   } else if (action === 'sign') {
     pinBuffer = '';
@@ -843,6 +859,14 @@ async function checkPIN(pin) {
     openApp();
   } else {
     if (navigator.vibrate) navigator.vibrate([80, 40, 80]);
+    // Flash rojo en los dots
+    const row = document.getElementById('pin-dots-row');
+    if (row) {
+      row.innerHTML = Array(6).fill(null).map(() =>
+        '<div style="width:6px;height:6px;border-radius:50%;background:#ff3b30"></div>'
+      ).join('');
+      setTimeout(() => updatePINDots(), 800);
+    }
     calcClear();
   }
 }
