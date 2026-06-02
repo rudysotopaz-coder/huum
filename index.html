@@ -494,7 +494,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl/1.0.3/nacl-fast.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tweetnacl-util/0.15.1/nacl-util.min.js"></script>
 <script>
 const BACKEND = 'https://sechat-backend2-production.up.railway.app';
 
@@ -534,51 +533,59 @@ function getRoomKey(roomId) {
   return roomKeys[roomId] || null;
 }
 
+// Helpers nativos (sin nacl.util)
+function b64encode(bytes) {
+  return btoa(String.fromCharCode(...bytes));
+}
+function b64decode(str) {
+  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+}
+
 function encryptText(text, key) {
   try {
     const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
-    const message = nacl.util.decodeUTF8(text);
+    const message = new TextEncoder().encode(text);
     const encrypted = nacl.secretbox(message, nonce, key);
     const combined = new Uint8Array(nonce.length + encrypted.length);
     combined.set(nonce);
     combined.set(encrypted, nonce.length);
-    return E2E_PREFIX + nacl.util.encodeBase64(combined);
-  } catch { return text; }
+    return E2E_PREFIX + b64encode(combined);
+  } catch(e) { console.error('encryptText:', e); return text; }
 }
 
 function decryptText(encoded, key) {
   try {
     if (!encoded || !encoded.startsWith(E2E_PREFIX)) return encoded;
-    const combined = nacl.util.decodeBase64(encoded.slice(E2E_PREFIX.length));
+    const combined = b64decode(encoded.slice(E2E_PREFIX.length));
     const nonce = combined.slice(0, nacl.secretbox.nonceLength);
     const ciphertext = combined.slice(nacl.secretbox.nonceLength);
     const decrypted = nacl.secretbox.open(ciphertext, nonce, key);
     if (!decrypted) return '🔒 [No se pudo descifrar]';
-    return nacl.util.encodeUTF8(decrypted);
-  } catch { return '🔒 [Error]'; }
+    return new TextDecoder().decode(decrypted);
+  } catch(e) { console.error('decryptText:', e); return '🔒 [Error]'; }
 }
 
 function encryptBinary(base64Data, key) {
   try {
-    const bytes = nacl.util.decodeBase64(base64Data);
+    const bytes = b64decode(base64Data);
     const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
     const encrypted = nacl.secretbox(bytes, nonce, key);
     const combined = new Uint8Array(nonce.length + encrypted.length);
     combined.set(nonce);
     combined.set(encrypted, nonce.length);
-    return E2E_PREFIX + nacl.util.encodeBase64(combined);
+    return E2E_PREFIX + b64encode(combined);
   } catch { return null; }
 }
 
 function decryptBinary(encoded, key) {
   try {
     if (!encoded || !encoded.startsWith(E2E_PREFIX)) return null;
-    const combined = nacl.util.decodeBase64(encoded.slice(E2E_PREFIX.length));
+    const combined = b64decode(encoded.slice(E2E_PREFIX.length));
     const nonce = combined.slice(0, nacl.secretbox.nonceLength);
     const ciphertext = combined.slice(nacl.secretbox.nonceLength);
     const decrypted = nacl.secretbox.open(ciphertext, nonce, key);
     if (!decrypted) return null;
-    return nacl.util.encodeBase64(decrypted);
+    return b64encode(decrypted);
   } catch { return null; }
 }
 
