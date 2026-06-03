@@ -1288,6 +1288,8 @@ async function confirmDeleteRoomFromList(roomId, name) {
 // ── CHAT ───────────────────────────────────────────────────────────────────
 function openRoom(room) {
   currentRoom = { ...room, room_id: room.room_id || room.id };
+  // Cargar clave E2E automáticamente (desde sessionStorage o localStorage)
+  loadRoomKey(currentRoom.room_id);
   messages = [];
   replyToMsg = null;
   pendingImageFile = null;
