@@ -514,7 +514,61 @@ function storeRemove(key) {
 
 // ── E2E ENCRYPTION ──────────────────────────────────────────────────────────
 const E2E_PREFIX = 'E2E_v1:';
-const roomKeys = {}; // { room_id: Uint8Array }
+// roomKeys persiste en sessionStorage (se borra al cerrar navegador)
+const roomKeys = {};
+
+function saveRoomKey(roomId, key, password) {
+  roomKeys[roomId] = key;
+  try {
+    // Guardar clave como hex en sessionStorage
+    const hex = Array.from(key).map(b => b.toString(16).padStart(2,'0')).join('');
+    sessionStorage.setItem('huum_rk_' + roomId, hex);
+    // Guardar password cifrado en localStorage (para recuperar clave al reabrir)
+    if (password) {
+      // Cifrar password con el PIN hash del usuario
+      const enc = btoa(unescape(encodeURIComponent(password)));
+      storeSave('huum_rp_' + roomId, enc);
+    }
+  } catch {}
+}
+
+function loadRoomKey(roomId) {
+  if (roomKeys[roomId]) return roomKeys[roomId];
+  
+  // Intentar desde sessionStorage
+  try {
+    const hex = sessionStorage.getItem('huum_rk_' + roomId);
+    if (hex && hex.length === 64) {
+      const bytes = new Uint8Array(32);
+      for (let i = 0; i < 32; i++) bytes[i] = parseInt(hex.substr(i*2, 2), 16);
+      roomKeys[roomId] = bytes;
+      return bytes;
+    }
+  } catch {}
+
+  // Intentar derivar desde password guardado en localStorage
+  try {
+    const enc = storeGet('huum_rp_' + roomId);
+    if (enc) {
+      const password = decodeURIComponent(escape(atob(enc)));
+      const key = deriveRoomKeySync(password, roomId);
+      saveRoomKey(roomId, key, null); // guardar sin re-escribir password
+      return key;
+    }
+  } catch {}
+
+  return null;
+}
+
+function clearRoomKeys() {
+  Object.keys(roomKeys).forEach(k => delete roomKeys[k]);
+  try {
+    Object.keys(sessionStorage)
+      .filter(k => k.startsWith('huum_rk_'))
+      .forEach(k => sessionStorage.removeItem(k));
+  } catch {}
+  // NO borrar los passwords guardados en localStorage - persisten entre sesiones
+}
 
 // Pure JS SHA-256 - works on all browsers including Safari
 function sha256(str) {
@@ -592,12 +646,12 @@ async function deriveRoomKey(password, roomId) {
 
 async function deriveAndStoreKey(password, roomId) {
   const key = deriveRoomKeySync(password, roomId);
-  roomKeys[roomId] = key;
+  saveRoomKey(roomId, key, password);
   return key;
 }
 
 function getRoomKey(roomId) {
-  return roomKeys[roomId] || null;
+  return loadRoomKey(roomId);
 }
 
 // Helpers nativos (sin nacl.util)
@@ -816,8 +870,8 @@ document.addEventListener('visibilitychange', () => {
 
 function lockApp() {
   disconnectSocket();
-  // Limpiar claves E2E de memoria
-  Object.keys(roomKeys).forEach(k => delete roomKeys[k]);
+  // Limpiar claves E2E de memoria y sessionStorage
+  clearRoomKeys();
   document.getElementById('app-screen').style.display = 'none';
   document.getElementById('calc-screen').style.display = 'flex';
   calcState = { display: '0', expression: '', operand: null, operator: null, waitNext: false };
