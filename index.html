@@ -1298,8 +1298,11 @@ function openRoom(room) {
   document.getElementById('home-view').style.display = 'none';
   document.getElementById('chat-view').style.display = 'flex';
   document.getElementById('chat-title').textContent = '#' + currentRoom.name;
-  const e2eEl = document.getElementById('chat-e2e-badge');
-  if (e2eEl) e2eEl.style.display = getRoomKey(currentRoom.room_id) ? 'block' : 'none';
+  // Actualizar badge E2E después de cargar clave
+  setTimeout(() => {
+    const e2eEl = document.getElementById('chat-e2e-badge');
+    if (e2eEl) e2eEl.style.display = getRoomKey(currentRoom.room_id) ? 'block' : 'none';
+  }, 100);
   document.getElementById('chat-delete-btn').style.display = currentRoom.is_creator ? 'block' : 'none';
   
   // Apply room color accent
@@ -1331,6 +1334,8 @@ async function fetchMessages() {
   try {
     const res = await fetch(`${BACKEND}/api/messages/${currentRoom.room_id}?session_token=${sessionToken}`);
     const rawMessages = await res.json();
+    // Asegurar que la clave E2E esté cargada antes de descifrar
+    loadRoomKey(currentRoom.room_id);
     messages = rawMessages.map(msg => decryptIncoming(msg));
     renderMessages();
     setTimeout(scrollToBottom, 100);
