@@ -9,105 +9,84 @@
 * { margin:0; padding:0; box-sizing:border-box; }
 body { background:#050505; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; }
 
-#login-screen {
-  display:flex; align-items:center; justify-content:center;
-  height:100vh; background:#000;
-}
-.login-box {
-  width:100%; max-width:360px; padding:40px 32px;
-  background:#0d0d0d; border:1px solid #1a1a1a; border-radius:20px;
-}
-.login-logo {
-  width:52px; height:52px; background:#fff; border-radius:14px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:26px; font-weight:900; color:#000; margin:0 auto 24px;
-}
+#login-screen { display:flex; align-items:center; justify-content:center; height:100vh; background:#000; }
+.login-box { width:100%; max-width:360px; padding:40px 32px; background:#0d0d0d; border:1px solid #1a1a1a; border-radius:20px; }
+.login-logo { width:52px; height:52px; background:#fff; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:900; color:#000; margin:0 auto 24px; }
 .login-title { text-align:center; font-size:20px; font-weight:700; margin-bottom:4px; }
 .login-sub { text-align:center; color:#444; font-size:13px; margin-bottom:32px; }
-.login-input {
-  width:100%; background:#141414; border:1px solid #1e1e1e;
-  border-radius:12px; padding:13px 16px; color:#fff; font-size:15px;
-  outline:none; margin-bottom:12px;
-}
+.login-input { width:100%; background:#141414; border:1px solid #1e1e1e; border-radius:12px; padding:13px 16px; color:#fff; font-size:15px; outline:none; margin-bottom:12px; }
 .login-input::placeholder { color:#333; }
-.login-btn {
-  width:100%; padding:14px; background:#fff; color:#000;
-  border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer;
-}
+.login-btn { width:100%; padding:14px; background:#fff; color:#000; border:none; border-radius:12px; font-size:15px; font-weight:700; cursor:pointer; }
 .login-error { color:#ff3b30; font-size:13px; text-align:center; margin-top:10px; min-height:18px; }
 
 #dashboard { display:none; }
 
-.top-bar {
-  display:flex; align-items:center; justify-content:space-between;
-  padding:20px 28px; border-bottom:1px solid #111;
-  position:sticky; top:0; background:#050505; z-index:10;
-}
+.top-bar { display:flex; align-items:center; justify-content:space-between; padding:20px 28px; border-bottom:1px solid #111; position:sticky; top:0; background:#050505; z-index:10; }
 .top-logo { display:flex; align-items:center; gap:10px; }
-.top-logo-icon {
-  width:34px; height:34px; background:#fff; border-radius:9px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:17px; font-weight:900; color:#000;
-}
-.top-logo-name { font-size:16px; font-weight:700; letter-spacing:0.5px; }
+.top-logo-icon { width:34px; height:34px; background:#fff; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:900; color:#000; }
+.top-logo-name { font-size:16px; font-weight:700; }
 .top-right { display:flex; align-items:center; gap:16px; }
 .last-updated { color:#333; font-size:12px; }
-.refresh-btn {
-  background:#141414; border:1px solid #1e1e1e; color:#fff;
-  padding:8px 14px; border-radius:10px; font-size:13px; cursor:pointer;
-}
-.logout-btn {
-  background:none; border:none; color:#444; font-size:13px; cursor:pointer;
-}
+.refresh-btn { background:#141414; border:1px solid #1e1e1e; color:#fff; padding:8px 14px; border-radius:10px; font-size:13px; cursor:pointer; }
+.logout-btn { background:none; border:none; color:#444; font-size:13px; cursor:pointer; }
 
 .content { padding:28px; max-width:1200px; margin:0 auto; }
+.section-title { font-size:13px; color:#444; text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; margin-top:32px; }
 
-.section-title { font-size:13px; color:#444; text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; }
+/* Live indicator */
+.live-bar { display:flex; align-items:center; gap:16px; background:#0d0d0d; border:1px solid #1a1a1a; border-radius:14px; padding:16px 20px; margin-bottom:24px; flex-wrap:wrap; }
+.live-dot { width:10px; height:10px; border-radius:50%; background:#30d158; animation:pulse 2s infinite; flex-shrink:0; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.live-stat { display:flex; flex-direction:column; }
+.live-num { font-size:28px; font-weight:700; }
+.live-label { font-size:12px; color:#444; }
+.live-divider { width:1px; height:40px; background:#1a1a1a; }
 
-.kpi-grid {
-  display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));
-  gap:12px; margin-bottom:32px;
-}
-.kpi-card {
-  background:#0d0d0d; border:1px solid #111; border-radius:16px;
-  padding:20px; position:relative; overflow:hidden;
-}
-.kpi-card::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:2px;
-}
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px; margin-bottom:24px; }
+.kpi-card { background:#0d0d0d; border:1px solid #111; border-radius:16px; padding:20px; position:relative; overflow:hidden; }
+.kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
 .kpi-card.blue::before { background:#4a9eff; }
 .kpi-card.green::before { background:#30d158; }
 .kpi-card.purple::before { background:#bf5af2; }
 .kpi-card.orange::before { background:#ff9f0a; }
-.kpi-card.red::before { background:#ff453a; }
 .kpi-card.teal::before { background:#40c8e0; }
 .kpi-card.yellow::before { background:#ffd60a; }
-
+.kpi-card.red::before { background:#ff453a; }
 .kpi-label { font-size:12px; color:#444; margin-bottom:10px; }
-.kpi-value { font-size:32px; font-weight:700; letter-spacing:-1px; }
+.kpi-value { font-size:32px; font-weight:700; }
 .kpi-sub { font-size:11px; color:#333; margin-top:6px; }
 
-.charts-grid {
-  display:grid; grid-template-columns:1fr 1fr;
-  gap:16px; margin-bottom:32px;
-}
-.chart-card {
-  background:#0d0d0d; border:1px solid #111; border-radius:16px; padding:24px;
-}
+.charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px; }
+.chart-card { background:#0d0d0d; border:1px solid #111; border-radius:16px; padding:24px; }
 .chart-card.full { grid-column:span 2; }
 .chart-title { font-size:14px; font-weight:600; margin-bottom:20px; color:#888; }
 .chart-wrap { position:relative; height:200px; }
+
+/* Device breakdown */
+.device-row { display:flex; gap:12px; flex-wrap:wrap; }
+.device-pill { background:#141414; border:1px solid #1e1e1e; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:8px; }
+.device-icon { font-size:18px; }
+.device-info { }
+.device-name { font-size:13px; font-weight:600; }
+.device-count { font-size:11px; color:#444; }
+
+/* Connection history table */
+.history-table { width:100%; border-collapse:collapse; font-size:13px; }
+.history-table th { color:#444; text-align:left; padding:8px 12px; border-bottom:1px solid #111; font-weight:500; }
+.history-table td { padding:10px 12px; border-bottom:1px solid #0d0d0d; color:#888; }
+.history-table tr:hover td { background:#0d0d0d; }
+.badge { padding:3px 8px; border-radius:6px; font-size:11px; font-weight:600; }
+.badge-connect { background:#0a1a0a; color:#30d158; }
+.badge-disconnect { background:#1a0a0a; color:#ff453a; }
+.badge-mobile { background:#1a1020; color:#bf5af2; }
+.badge-desktop { background:#0a1020; color:#4a9eff; }
+.badge-tablet { background:#1a1500; color:#ffd60a; }
 
 .days-row { display:flex; gap:4px; margin-top:16px; }
 .day-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; }
 .day-bar-outer { width:100%; background:#111; border-radius:4px; height:60px; display:flex; align-items:flex-end; }
 .day-bar-inner { width:100%; border-radius:4px; background:#4a9eff; transition:height 0.3s; }
 .day-label { font-size:10px; color:#333; }
-
-.loading-overlay {
-  display:flex; align-items:center; justify-content:center;
-  height:200px; color:#333; font-size:14px;
-}
 
 @media(max-width:600px) {
   .charts-grid { grid-template-columns:1fr; }
@@ -119,7 +98,6 @@ body { background:#050505; color:#fff; font-family:-apple-system,BlinkMacSystemF
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-box">
     <div class="login-logo">H</div>
@@ -132,7 +110,6 @@ body { background:#050505; color:#fff; font-family:-apple-system,BlinkMacSystemF
   </div>
 </div>
 
-<!-- DASHBOARD -->
 <div id="dashboard">
   <div class="top-bar">
     <div class="top-logo">
@@ -147,64 +124,77 @@ body { background:#050505; color:#fff; font-family:-apple-system,BlinkMacSystemF
   </div>
 
   <div class="content">
-    <div class="section-title">Resumen general</div>
-    <div class="kpi-grid">
-      <div class="kpi-card blue">
-        <div class="kpi-label">Usuarios activos 7d</div>
-        <div class="kpi-value" id="kpi-active7">—</div>
-        <div class="kpi-sub">con mensajes esta semana</div>
+
+    <!-- LIVE -->
+    <div class="section-title">En tiempo real</div>
+    <div class="live-bar">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="live-dot"></div>
+        <span style="font-size:13px;color:#30d158;font-weight:600">EN VIVO</span>
       </div>
-      <div class="kpi-card green">
-        <div class="kpi-label">Usuarios activos 30d</div>
-        <div class="kpi-value" id="kpi-active30">—</div>
-        <div class="kpi-sub">este mes</div>
+      <div class="live-divider"></div>
+      <div class="live-stat">
+        <span class="live-num" id="live-total">—</span>
+        <span class="live-label">conectados ahora</span>
       </div>
-      <div class="kpi-card purple">
-        <div class="kpi-label">Mensajes 48h</div>
-        <div class="kpi-value" id="kpi-messages">—</div>
-        <div class="kpi-sub">últimas 48 horas</div>
+      <div class="live-divider"></div>
+      <div class="live-stat">
+        <span class="live-num" id="live-rooms">—</span>
+        <span class="live-label">en salas</span>
       </div>
-      <div class="kpi-card orange">
-        <div class="kpi-label">Salas activas</div>
-        <div class="kpi-value" id="kpi-active-rooms">—</div>
-        <div class="kpi-sub">con actividad reciente</div>
-      </div>
-      <div class="kpi-card teal">
-        <div class="kpi-label">Total salas</div>
-        <div class="kpi-value" id="kpi-total-rooms">—</div>
-        <div class="kpi-sub">en la plataforma</div>
-      </div>
-      <div class="kpi-card yellow">
-        <div class="kpi-label">Imágenes 30d</div>
-        <div class="kpi-value" id="kpi-images">—</div>
-        <div class="kpi-sub">fotos enviadas</div>
-      </div>
-      <div class="kpi-card red">
-        <div class="kpi-label">Reportes 30d</div>
-        <div class="kpi-value" id="kpi-reports">—</div>
-        <div class="kpi-sub">problemas reportados</div>
-      </div>
+      <div class="live-divider"></div>
+      <div id="live-devices" style="display:flex;gap:12px;flex-wrap:wrap"></div>
     </div>
 
+    <!-- KPIs -->
+    <div class="section-title">Resumen</div>
+    <div class="kpi-grid">
+      <div class="kpi-card blue"><div class="kpi-label">Usuarios activos 7d</div><div class="kpi-value" id="kpi-active7">—</div></div>
+      <div class="kpi-card green"><div class="kpi-label">Usuarios activos 30d</div><div class="kpi-value" id="kpi-active30">—</div></div>
+      <div class="kpi-card purple"><div class="kpi-label">Mensajes 48h</div><div class="kpi-value" id="kpi-messages">—</div></div>
+      <div class="kpi-card orange"><div class="kpi-label">Salas activas</div><div class="kpi-value" id="kpi-active-rooms">—</div></div>
+      <div class="kpi-card teal"><div class="kpi-label">Total salas</div><div class="kpi-value" id="kpi-total-rooms">—</div></div>
+      <div class="kpi-card yellow"><div class="kpi-label">Imágenes 30d</div><div class="kpi-value" id="kpi-images">—</div></div>
+      <div class="kpi-card red"><div class="kpi-label">Reportes 30d</div><div class="kpi-value" id="kpi-reports">—</div></div>
+    </div>
+
+    <!-- Dispositivos -->
+    <div class="section-title">Dispositivos (30 días)</div>
+    <div id="device-stats" class="device-row" style="margin-bottom:24px"></div>
+
+    <!-- Charts -->
     <div class="section-title">Actividad</div>
     <div class="charts-grid">
       <div class="chart-card full">
         <div class="chart-title">Mensajes por hora del día</div>
-        <div class="chart-wrap">
-          <canvas id="chart-hours"></canvas>
-        </div>
+        <div class="chart-wrap"><canvas id="chart-hours"></canvas></div>
       </div>
       <div class="chart-card">
-        <div class="chart-title">Actividad por día de la semana</div>
+        <div class="chart-title">Por día de semana</div>
         <div id="days-chart" class="days-row"></div>
       </div>
       <div class="chart-card">
-        <div class="chart-title">Nuevos usuarios (últimos 7 días)</div>
-        <div class="chart-wrap">
-          <canvas id="chart-new-users"></canvas>
-        </div>
+        <div class="chart-title">Nuevos usuarios (7 días)</div>
+        <div class="chart-wrap"><canvas id="chart-new-users"></canvas></div>
       </div>
     </div>
+
+    <!-- Historial conexiones -->
+    <div class="section-title">Historial de conexiones (últimas 7 días)</div>
+    <div style="background:#0d0d0d;border:1px solid #111;border-radius:16px;overflow:hidden;margin-bottom:40px">
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Fecha y hora</th>
+            <th>Evento</th>
+            <th>Dispositivo</th>
+            <th>Duración</th>
+          </tr>
+        </thead>
+        <tbody id="connection-history"></tbody>
+      </table>
+    </div>
+
   </div>
 </div>
 
@@ -212,6 +202,7 @@ body { background:#050505; color:#fff; font-family:-apple-system,BlinkMacSystemF
 const BACKEND = 'https://sechat-backend2-production.up.railway.app';
 let authUser = '', authPass = '';
 let chartHours = null, chartNewUsers = null;
+let liveInterval = null;
 
 function doLogin() {
   const user = document.getElementById('login-user').value.trim();
@@ -219,30 +210,41 @@ function doLogin() {
   const errEl = document.getElementById('login-error');
   errEl.textContent = '';
   if (!user || !pass) { errEl.textContent = 'Completa los campos'; return; }
-  authUser = user;
-  authPass = pass;
+  authUser = user; authPass = pass;
   loadData();
 }
 
 function logout() {
   authUser = ''; authPass = '';
+  if (liveInterval) clearInterval(liveInterval);
   document.getElementById('dashboard').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('login-user').value = '';
-  document.getElementById('login-pass').value = '';
 }
 
 async function loadData() {
   try {
-    const res = await fetch(`${BACKEND}/api/analytics/dashboard?user=${encodeURIComponent(authUser)}&pass=${encodeURIComponent(authPass)}`);
-    if (res.status === 401) {
-      document.getElementById('login-error').textContent = 'Usuario o contraseña incorrectos';
-      return;
-    }
+    const [res, liveRes] = await Promise.all([
+      fetch(`${BACKEND}/api/analytics/dashboard?user=${encodeURIComponent(authUser)}&pass=${encodeURIComponent(authPass)}`),
+      fetch(`${BACKEND}/api/analytics/live?user=${encodeURIComponent(authUser)}&pass=${encodeURIComponent(authPass)}`)
+    ]);
+
+    if (res.status === 401) { document.getElementById('login-error').textContent = 'Usuario o contraseña incorrectos'; return; }
+
     const data = await res.json();
+    const live = liveRes.ok ? await liveRes.json() : { total: 0, in_room: 0, by_device: {} };
 
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('dashboard').style.display = 'block';
+
+    // Live
+    document.getElementById('live-total').textContent = live.total;
+    document.getElementById('live-rooms').textContent = live.in_room;
+
+    const deviceIcons = { mobile: '📱', desktop: '💻', tablet: '📲', android: '🤖', unknown: '❓' };
+    const liveDevEl = document.getElementById('live-devices');
+    liveDevEl.innerHTML = Object.entries(live.by_device || {}).map(([dev, count]) =>
+      `<div style="display:flex;align-items:center;gap:6px"><span>${deviceIcons[dev]||'📱'}</span><span style="font-size:13px;color:#fff;font-weight:600">${count}</span><span style="font-size:11px;color:#444">${dev}</span></div>`
+    ).join('');
 
     // KPIs
     document.getElementById('kpi-active7').textContent = data.activeUsers7;
@@ -254,43 +256,75 @@ async function loadData() {
     document.getElementById('kpi-reports').textContent = data.reports;
     document.getElementById('last-updated').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es');
 
-    renderHoursChart(data.messagesByHour);
-    renderDaysChart(data.messagesByDow);
-    renderNewUsersChart(data.newUsersByDay);
+    // Device stats
+    const devEl = document.getElementById('device-stats');
+    devEl.innerHTML = (data.deviceStats || []).map(d =>
+      `<div class="device-pill"><span class="device-icon">${deviceIcons[d.device_type]||'📱'}</span><div class="device-info"><div class="device-name">${d.device_type}</div><div class="device-count">${d.count} conexiones</div></div></div>`
+    ).join('') || '<span style="color:#333;font-size:13px">Sin datos aún</span>';
+
+    renderHoursChart(data.messagesByHour || []);
+    renderDaysChart(data.messagesByDow || []);
+    renderNewUsersChart(data.newUsersByDay || []);
+    renderConnectionHistory(data.connectionHistory || []);
+
+    // Auto-refresh live cada 30s
+    if (!liveInterval) {
+      liveInterval = setInterval(loadLive, 30000);
+    }
 
   } catch(e) {
     document.getElementById('login-error').textContent = 'Error de conexión';
   }
 }
 
+async function loadLive() {
+  try {
+    const res = await fetch(`${BACKEND}/api/analytics/live?user=${encodeURIComponent(authUser)}&pass=${encodeURIComponent(authPass)}`);
+    if (!res.ok) return;
+    const live = await res.json();
+    document.getElementById('live-total').textContent = live.total;
+    document.getElementById('live-rooms').textContent = live.in_room;
+    const deviceIcons = { mobile: '📱', desktop: '💻', tablet: '📲', android: '🤖', unknown: '❓' };
+    document.getElementById('live-devices').innerHTML = Object.entries(live.by_device || {}).map(([dev, count]) =>
+      `<div style="display:flex;align-items:center;gap:6px"><span>${deviceIcons[dev]||'📱'}</span><span style="font-size:13px;color:#fff;font-weight:600">${count}</span><span style="font-size:11px;color:#444">${dev}</span></div>`
+    ).join('');
+  } catch {}
+}
+
+function renderConnectionHistory(data) {
+  const tbody = document.getElementById('connection-history');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#333;padding:24px">Sin datos aún</td></tr>';
+    return;
+  }
+  const deviceIcons = { mobile: '📱', desktop: '💻', tablet: '📲', android: '🤖', unknown: '❓' };
+  tbody.innerHTML = data.map(row => {
+    const date = new Date(row.created_at);
+    const dateStr = date.toLocaleDateString('es', { month:'short', day:'numeric' }) + ' ' + date.toLocaleTimeString('es', { hour:'2-digit', minute:'2-digit' });
+    const isConnect = row.event_type === 'socket_connect';
+    const dur = row.duration_seconds ? (row.duration_seconds >= 60 ? Math.floor(row.duration_seconds/60) + 'm' : row.duration_seconds + 's') : '—';
+    const devType = row.device_type || 'unknown';
+    return `<tr>
+      <td>${dateStr}</td>
+      <td><span class="badge ${isConnect ? 'badge-connect' : 'badge-disconnect'}">${isConnect ? '● Conectó' : '○ Desconectó'}</span></td>
+      <td><span class="badge badge-${devType}">${deviceIcons[devType]||'📱'} ${devType}</span></td>
+      <td>${isConnect ? '—' : dur}</td>
+    </tr>`;
+  }).join('');
+}
+
 function renderHoursChart(data) {
   const hours = Array(24).fill(0);
   data.forEach(d => { hours[parseInt(d.hour)] = parseInt(d.count); });
-
   if (chartHours) chartHours.destroy();
   const ctx = document.getElementById('chart-hours').getContext('2d');
   chartHours = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: hours.map((_, i) => i + 'h'),
-      datasets: [{
-        data: hours,
-        backgroundColor: hours.map(v => {
-          const max = Math.max(...hours);
-          const intensity = max > 0 ? v / max : 0;
-          return `rgba(74, 158, 255, ${0.2 + intensity * 0.8})`;
-        }),
-        borderRadius: 4
-      }]
+      datasets: [{ data: hours, backgroundColor: hours.map(v => { const m = Math.max(...hours); const i = m > 0 ? v/m : 0; return `rgba(74,158,255,${0.2+i*0.8})`; }), borderRadius: 4 }]
     },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: '#111' }, ticks: { color: '#444', font: { size: 10 } } },
-        y: { grid: { color: '#111' }, ticks: { color: '#444' } }
-      }
-    }
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{color:'#111'},ticks:{color:'#444',font:{size:10}}},y:{grid:{color:'#111'},ticks:{color:'#444'}}} }
   });
 }
 
@@ -299,16 +333,9 @@ function renderDaysChart(data) {
   const counts = Array(7).fill(0);
   data.forEach(d => { counts[parseInt(d.dow)] = parseInt(d.count); });
   const max = Math.max(...counts) || 1;
-
-  const container = document.getElementById('days-chart');
-  container.innerHTML = counts.map((count, i) => `
-    <div class="day-bar-wrap">
-      <div class="day-bar-outer">
-        <div class="day-bar-inner" style="height:${Math.round((count/max)*100)}%"></div>
-      </div>
-      <div class="day-label">${days[i]}</div>
-    </div>
-  `).join('');
+  document.getElementById('days-chart').innerHTML = counts.map((count, i) =>
+    `<div class="day-bar-wrap"><div class="day-bar-outer"><div class="day-bar-inner" style="height:${Math.round((count/max)*100)}%"></div></div><div class="day-label">${days[i]}</div></div>`
+  ).join('');
 }
 
 function renderNewUsersChart(data) {
@@ -317,28 +344,10 @@ function renderNewUsersChart(data) {
   chartNewUsers = new Chart(ctx, {
     type: 'line',
     data: {
-      labels: data.map(d => {
-        const date = new Date(d.date);
-        return date.toLocaleDateString('es', { month:'short', day:'numeric' });
-      }),
-      datasets: [{
-        data: data.map(d => parseInt(d.count)),
-        borderColor: '#30d158',
-        backgroundColor: 'rgba(48,209,88,0.1)',
-        tension: 0.4,
-        fill: true,
-        pointRadius: 4,
-        pointBackgroundColor: '#30d158'
-      }]
+      labels: data.map(d => { const dt = new Date(d.date); return dt.toLocaleDateString('es',{month:'short',day:'numeric'}); }),
+      datasets: [{ data: data.map(d => parseInt(d.count)), borderColor:'#30d158', backgroundColor:'rgba(48,209,88,0.1)', tension:0.4, fill:true, pointRadius:4, pointBackgroundColor:'#30d158' }]
     },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { grid: { color: '#111' }, ticks: { color: '#444' } },
-        y: { grid: { color: '#111' }, ticks: { color: '#444' } }
-      }
-    }
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{grid:{color:'#111'},ticks:{color:'#444'}},y:{grid:{color:'#111'},ticks:{color:'#444'}}} }
   });
 }
 </script>
