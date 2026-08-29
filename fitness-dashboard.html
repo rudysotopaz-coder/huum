@@ -88,6 +88,33 @@ hr.divider { border:none; border-top:1px solid #161616; }
 
 .footer-note { margin-top:40px; padding:18px 20px; background:#0d0d0d; border:1px solid #141414; border-radius:14px; font-size:12.5px; color:#666; line-height:1.6; }
 .footer-note b { color:#999; }
+
+/* Plan de entrenamiento */
+.coach-note { background:#0d0d0d; border:1px solid #141414; border-left:3px solid #fc4c02; border-radius:14px; padding:20px 22px; margin-bottom:16px; }
+.coach-note-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.coach-note-icon { font-size:18px; }
+.coach-note-title { font-size:13.5px; font-weight:700; color:#eee; }
+.coach-note p { font-size:13px; color:#999; line-height:1.7; margin-bottom:10px; }
+.coach-note p:last-child { margin-bottom:0; }
+.coach-note strong { color:#ddd; }
+
+.phase-pill { display:inline-block; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:6px; white-space:nowrap; }
+.phase-base{background:#0a1620;color:#4a9eff} .phase-build1{background:#0a1a0a;color:#30d158} .phase-build2{background:#0d1f0d;color:#5fe37f}
+.phase-peak{background:#1a1a0a;color:#ffd60a} .phase-taper{background:#1a0f05;color:#ff9f4d} .phase-race{background:#1a0a0a;color:#ff453a}
+.plan-table td.long-cell { font-weight:700; color:#fff; }
+.plan-table tr.checkpoint td { background:#120d05; }
+
+.week-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:10px; }
+@media (max-width:900px){ .week-grid{ grid-template-columns:repeat(2,1fr); } }
+.day-card { background:#141414; border:1px solid #1e1e1e; border-radius:12px; padding:13px 12px; display:flex; flex-direction:column; gap:6px; min-height:130px; }
+.day-card.long-run { background:#1a0f05; border-color:#3a2308; }
+.day-name { font-size:10.5px; color:#555; text-transform:uppercase; letter-spacing:.6px; font-weight:700; }
+.day-card.long-run .day-name { color:#ff9f4d; }
+.day-session { font-size:12.5px; font-weight:700; line-height:1.3; }
+.day-detail { font-size:11px; color:#666; line-height:1.4; }
+.day-card.long-run .day-detail { color:#c98a52; }
+.plan-legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:14px; font-size:11.5px; color:#555; }
+.plan-legend span.dot { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; }
 </style>
 </head>
 <body>
@@ -172,6 +199,39 @@ hr.divider { border:none; border-top:1px solid #161616; }
           <tr><td><span class="tag tag-z5">Z5</span> VO2max</td><td>4:33 – 4:50</td><td>Intervalos cortos, velocidad</td></tr>
         </tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- PLAN DE ENTRENAMIENTO -->
+  <div class="section-title">Plan de entrenamiento — análisis del coach</div>
+  <div class="coach-note">
+    <div class="coach-note-head"><span class="coach-note-icon">🧭</span><span class="coach-note-title">Diagnóstico</span></div>
+    <p>Con <strong>8 meses corriendo</strong> y una media maratón ya bajo las <strong>2 horas (1:57:35)</strong>, tu nivel de base es sólido para tan poco tiempo — pero tu volumen actual (~28-30 km/semana) todavía es de <strong>fase de base</strong>, no de fase de maratón. Un maratón exige haber tocado picos de 50-65 km/semana y tiradas de 30-32 km antes del taper. Ahí es donde vamos a construir en las próximas semanas.</p>
+    <p>El combo <strong>pesas 5×/semana + running 3-4×/semana</strong> funciona bien si se ordena: el mayor riesgo no es la carga total, es acumular fatiga de piernas justo antes o después de la sesión de calidad y de la tirada larga. Por eso el bloque de piernas se separa de esos dos días clave.</p>
+    <p>Riesgo #1 a vigilar: al tener solo 8 meses de running, el tejido conectivo (tendones, fascia) va más lento que el sistema cardiovascular. Subimos volumen con la <strong>regla del 10% semanal</strong> y una semana de descarga cada 4 — si sientes dolor puntual (no fatiga general), avísame y ajustamos esa semana.</p>
+    <p>Estrategia de las dos metas: usamos la <strong>semana 13 (≈3 meses, 29 nov)</strong> como intento real de bajar tu marca de media maratón, y la <strong>semana 16 (≈4 meses, 20 dic)</strong> para el maratón, con taper completo después de esa carrera de control.</p>
+    <p><strong>Proyección honesta:</strong> tu 1:57:35 actual predice matemáticamente un maratón ~3:53 (fórmula de Riegel), pero es tu <em>primer</em> maratón — factores como nutrición en carrera, el muro de los 30-35 km y la logística del día suelen restar tiempo. Meta realista: <strong>3:55–4:15</strong>. Para la media maratón de control, con este bloque de entrenamiento un objetivo razonable es <strong>sub-1:52</strong> (ritmo ~5:18/km).</p>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div class="chart-title" style="margin-bottom:14px;">Periodización — 16 semanas hasta el maratón (ajustable)</div>
+    <div class="table-scroll">
+      <table class="data-table plan-table" id="planTable">
+        <thead><tr><th>Sem.</th><th>Fechas</th><th>Fase</th><th>Volumen</th><th>Tirada larga (dom)</th><th>Foco de la semana</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="chart-title" style="margin-bottom:6px;">Plantilla semanal (patrón base, se ajusta según la fase)</div>
+    <div class="empty-note" style="text-align:left; padding:10px 0 18px; border:none; color:#555;">Este es el esqueleto de la semana tipo. El volumen y las distancias de cada sesión cambian según la fase de la tabla de arriba — dime si un día no te funciona y lo movemos.</div>
+    <div class="week-grid" id="weekGrid"></div>
+    <div class="plan-legend">
+      <span><span class="dot" style="background:#30d158"></span>Fácil / recuperación</span>
+      <span><span class="dot" style="background:#ffd60a"></span>Calidad (series / tempo)</span>
+      <span><span class="dot" style="background:#bf5af2"></span>Fuerza</span>
+      <span><span class="dot" style="background:#ff9f4d"></span>Tirada larga</span>
     </div>
   </div>
 
@@ -260,7 +320,9 @@ hr.divider { border:none; border-top:1px solid #161616; }
     "10k": {"date":"2026-04-25","pace_min_km":5.41,"dist_km":9.98},
     "15k": {"date":"2026-07-05","pace_min_km":6.14,"dist_km":14.48},
     "21k": {"date":"2026-08-23","pace_min_km":5.52,"dist_km":21.29}
-  }
+  },
+  "training_plan": {"weeks":[{"week":1,"phase":"Base","range":"31 Aug–06 Sep","weekly_km":32,"long_run_km":16,"note":"Reconstrucción post-media maratón, todo fácil","phase_key":"base","checkpoint":false},{"week":2,"phase":"Base","range":"07 Sep–13 Sep","weekly_km":35,"long_run_km":18,"note":"Progresivo suave","phase_key":"base","checkpoint":false},{"week":3,"phase":"Base","range":"14 Sep–20 Sep","weekly_km":38,"long_run_km":20,"note":"Primer fartlek corto","phase_key":"base","checkpoint":false},{"week":4,"phase":"Base","range":"21 Sep–27 Sep","weekly_km":28,"long_run_km":14,"note":"Descarga (cutback)","phase_key":"base","checkpoint":false},{"week":5,"phase":"Build 1","range":"28 Sep–04 Oct","weekly_km":40,"long_run_km":22,"note":"Series cortas 6-8x400m","phase_key":"build1","checkpoint":false},{"week":6,"phase":"Build 1","range":"05 Oct–11 Oct","weekly_km":44,"long_run_km":24,"note":"Tempo 20min a ritmo Z3","phase_key":"build1","checkpoint":false},{"week":7,"phase":"Build 1","range":"12 Oct–18 Oct","weekly_km":48,"long_run_km":26,"note":"Progresivo + cambios de ritmo","phase_key":"build1","checkpoint":false},{"week":8,"phase":"Build 1","range":"19 Oct–25 Oct","weekly_km":34,"long_run_km":16,"note":"Descarga (cutback)","phase_key":"build1","checkpoint":false},{"week":9,"phase":"Build 2","range":"26 Oct–01 Nov","weekly_km":50,"long_run_km":28,"note":"Tempo 30min","phase_key":"build2","checkpoint":false},{"week":10,"phase":"Build 2","range":"02 Nov–08 Nov","weekly_km":54,"long_run_km":30,"note":"Bloques a ritmo maratón (2x6km)","phase_key":"build2","checkpoint":false},{"week":11,"phase":"Build 2","range":"09 Nov–15 Nov","weekly_km":58,"long_run_km":32,"note":"Long run pico (32km)","phase_key":"build2","checkpoint":false},{"week":12,"phase":"Build 2","range":"16 Nov–22 Nov","weekly_km":40,"long_run_km":18,"note":"Descarga (cutback)","phase_key":"build2","checkpoint":false},{"week":13,"phase":"Peak / Carrera de control","range":"23 Nov–29 Nov","weekly_km":46,"long_run_km":21.1,"note":"MEDIA MARATÓN de control (carrera o simulacro fuerte)","phase_key":"peak","checkpoint":true},{"week":14,"phase":"Taper","range":"30 Nov–06 Dec","weekly_km":34,"long_run_km":16,"note":"Bajando volumen, mantener intensidad corta","phase_key":"taper","checkpoint":false},{"week":15,"phase":"Taper","range":"07 Dec–13 Dec","weekly_km":24,"long_run_km":10,"note":"Bajando más, toques de ritmo maratón","phase_key":"taper","checkpoint":false},{"week":16,"phase":"Semana de carrera","range":"14 Dec–20 Dec","weekly_km":14,"long_run_km":null,"note":"Shakeouts cortos → MARATÓN el domingo","phase_key":"race","checkpoint":true}],
+  "week_template":[{"day":"Lunes","type":"easy","session":"Fácil corta o descanso","detail":"Z1-Z2 · 4-6 km si corres, o descanso total tras la tirada del domingo"},{"day":"Martes","type":"quality","session":"Calidad del día","detail":"Series / tempo (ver periodización) + fuerza tren superior"},{"day":"Miércoles","type":"strength","session":"Fuerza piernas","detail":"Sesión principal de piernas, lejos de la calidad y de la tirada larga"},{"day":"Jueves","type":"easy","session":"Fácil + tren superior","detail":"Z2 · 5-8 km + pesas tren superior / core"},{"day":"Viernes","type":"strength","session":"Fuerza / movilidad","detail":"Full body ligero o descanso activo, movilidad de cadera y tobillo"},{"day":"Sábado","type":"strength","session":"Fuerza suave o descanso","detail":"Sesión corta, nada pesado — mañana toca la tirada larga"},{"day":"Domingo","type":"long","session":"TIRADA LARGA","detail":"Z2 constante, según km de la semana en la tabla de arriba"}]}
 }
 </script>
 
@@ -369,6 +431,25 @@ document.getElementById('recentRunsBody').innerHTML = DATA.recent_runs.map(r => 
     <td>${fmtPace(r.pace_min_km)}</td>
     <td>${r.relative_effort}</td>
   </tr>`).join('');
+
+// ---- Plan de entrenamiento: periodización ----
+document.querySelector('#planTable tbody').innerHTML = DATA.training_plan.weeks.map(w => `
+  <tr class="${w.checkpoint ? 'checkpoint' : ''}">
+    <td>${w.week}</td>
+    <td>${w.range}</td>
+    <td><span class="phase-pill phase-${w.phase_key}">${w.phase}</span></td>
+    <td>${w.weekly_km} km</td>
+    <td class="long-cell">${w.long_run_km != null ? w.long_run_km + ' km' : '—'}</td>
+    <td>${w.note}</td>
+  </tr>`).join('');
+
+// ---- Plan de entrenamiento: plantilla semanal ----
+document.getElementById('weekGrid').innerHTML = DATA.training_plan.week_template.map(d => `
+  <div class="day-card ${d.type === 'long' ? 'long-run' : ''}">
+    <div class="day-name">${d.day}</div>
+    <div class="day-session">${d.session}</div>
+    <div class="day-detail">${d.detail}</div>
+  </div>`).join('');
 
 // ---- Desglose deportes ----
 document.getElementById('sportPills').innerHTML = DATA.sport_breakdown.map(s => `
