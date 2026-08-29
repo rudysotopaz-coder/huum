@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rudy — Panel de Entrenamiento</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#050505; color:#fff; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; min-height:100vh; }
+
+.top-bar { display:flex; align-items:center; justify-content:space-between; padding:20px 28px; border-bottom:1px solid #111; position:sticky; top:0; background:#050505; z-index:10; flex-wrap:wrap; gap:12px; }
+.top-logo { display:flex; align-items:center; gap:10px; }
+.top-logo-icon { width:34px; height:34px; background:#fc4c02; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+.top-logo-name { font-size:16px; font-weight:700; }
+.top-logo-sub { font-size:12px; color:#555; }
+.last-updated { color:#444; font-size:12px; background:#0d0d0d; border:1px solid #1a1a1a; padding:6px 12px; border-radius:8px; }
+
+.content { padding:28px; max-width:1240px; margin:0 auto; }
+.section-title { font-size:13px; color:#555; text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; margin-top:36px; }
+.section-title:first-of-type { margin-top:0; }
+
+/* profile + goals row */
+.profile-row { display:grid; grid-template-columns:1.1fr 1fr; gap:16px; }
+@media (max-width:800px){ .profile-row{ grid-template-columns:1fr; } }
+.card { background:#0d0d0d; border:1px solid #141414; border-radius:16px; padding:22px 24px; }
+.profile-card { display:flex; flex-direction:column; gap:14px; }
+.profile-head { display:flex; align-items:center; gap:14px; }
+.avatar { width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg,#fc4c02,#ff7a3d); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; flex-shrink:0; }
+.profile-name { font-size:19px; font-weight:700; }
+.profile-sub { font-size:12.5px; color:#555; margin-top:2px; }
+.profile-facts { display:grid; grid-template-columns:repeat(auto-fit,minmax(110px,1fr)); gap:10px; }
+.fact { background:#141414; border-radius:10px; padding:10px 12px; }
+.fact-label { font-size:10.5px; color:#555; text-transform:uppercase; letter-spacing:.5px; }
+.fact-value { font-size:15px; font-weight:700; margin-top:3px; }
+
+.goals-card { display:flex; flex-direction:column; gap:14px; justify-content:center; }
+.goal-item { display:flex; align-items:center; gap:14px; }
+.goal-icon { width:40px; height:40px; border-radius:10px; background:#141414; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+.goal-text { flex:1; }
+.goal-title { font-size:13.5px; font-weight:600; }
+.goal-detail { font-size:12px; color:#555; margin-top:2px; }
+.goal-badge { font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; background:#1a0f05; color:#ff9f4d; white-space:nowrap; }
+hr.divider { border:none; border-top:1px solid #161616; }
+
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:12px; margin-bottom:8px; }
+.kpi-card { background:#0d0d0d; border:1px solid #111; border-radius:16px; padding:18px 20px; position:relative; overflow:hidden; }
+.kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; }
+.kpi-card.orange::before { background:#fc4c02; }
+.kpi-card.blue::before { background:#4a9eff; }
+.kpi-card.green::before { background:#30d158; }
+.kpi-card.purple::before { background:#bf5af2; }
+.kpi-card.teal::before { background:#40c8e0; }
+.kpi-card.yellow::before { background:#ffd60a; }
+.kpi-card.red::before { background:#ff453a; }
+.kpi-label { font-size:11.5px; color:#555; margin-bottom:8px; }
+.kpi-value { font-size:26px; font-weight:700; }
+.kpi-sub { font-size:11px; color:#3a3a3a; margin-top:6px; }
+
+.charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:8px; }
+@media (max-width:800px){ .charts-grid{ grid-template-columns:1fr; } }
+.chart-card { background:#0d0d0d; border:1px solid #111; border-radius:16px; padding:22px; }
+.chart-card.full { grid-column:span 2; }
+@media (max-width:800px){ .chart-card.full{ grid-column:span 1; } }
+.chart-title { font-size:13.5px; font-weight:600; margin-bottom:18px; color:#999; }
+.chart-wrap { position:relative; height:230px; }
+
+.zone-table, .data-table { width:100%; border-collapse:collapse; font-size:13px; }
+.zone-table th, .data-table th { color:#555; text-align:left; padding:8px 12px; border-bottom:1px solid #161616; font-weight:500; font-size:11.5px; text-transform:uppercase; letter-spacing:.4px; }
+.zone-table td, .data-table td { padding:10px 12px; border-bottom:1px solid #0d0d0d; color:#ccc; }
+.zone-table tr:hover td, .data-table tr:hover td { background:#111; }
+.table-scroll { overflow-x:auto; }
+.tag { display:inline-block; font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:6px; }
+.tag-z1{background:#0a1620;color:#4a9eff} .tag-z2{background:#0a1a0a;color:#30d158} .tag-z3{background:#1a1a0a;color:#ffd60a} .tag-z4{background:#1a0f05;color:#ff9f4d} .tag-z5{background:#1a0a0a;color:#ff453a}
+
+.empty-note { font-size:13px; color:#555; padding:18px; text-align:center; border:1px dashed #1e1e1e; border-radius:12px; }
+
+.measure-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+.measure-card { background:#141414; border-radius:12px; padding:14px 16px; }
+.measure-name { font-size:13.5px; font-weight:700; display:flex; align-items:center; gap:8px; }
+.measure-num { width:20px; height:20px; border-radius:50%; background:#fc4c02; color:#fff; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.measure-desc { font-size:12px; color:#666; margin-top:5px; line-height:1.5; }
+
+.pill-row { display:flex; gap:10px; flex-wrap:wrap; }
+.pill { background:#141414; border:1px solid #1e1e1e; border-radius:10px; padding:10px 16px; display:flex; align-items:center; gap:8px; }
+.pill-count { font-size:15px; font-weight:700; }
+.pill-label { font-size:11.5px; color:#555; }
+
+.footer-note { margin-top:40px; padding:18px 20px; background:#0d0d0d; border:1px solid #141414; border-radius:14px; font-size:12.5px; color:#666; line-height:1.6; }
+.footer-note b { color:#999; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <div class="top-logo">
+    <div class="top-logo-icon">🏃</div>
+    <div>
+      <div class="top-logo-name">Panel de Entrenamiento</div>
+      <div class="top-logo-sub">Rudy Soto · conectado a Strava</div>
+    </div>
+  </div>
+  <div class="last-updated" id="lastUpdated"></div>
+</div>
+
+<div class="content">
+
+  <!-- PERFIL Y OBJETIVOS -->
+  <div class="profile-row">
+    <div class="card profile-card">
+      <div class="profile-head">
+        <div class="avatar">RS</div>
+        <div>
+          <div class="profile-name">Rudy Soto</div>
+          <div class="profile-sub">41 años · Hombre · Activo (pesas + running)</div>
+        </div>
+      </div>
+      <div class="profile-facts">
+        <div class="fact"><div class="fact-label">Estatura</div><div class="fact-value">1.75 m</div></div>
+        <div class="fact"><div class="fact-label">Peso actual</div><div class="fact-value" id="factWeight">—</div></div>
+        <div class="fact"><div class="fact-label">IMC</div><div class="fact-value" id="factBmi">—</div></div>
+        <div class="fact"><div class="fact-label">Pesas</div><div class="fact-value">5×/sem</div></div>
+        <div class="fact"><div class="fact-label">Running</div><div class="fact-value">3–4×/sem</div></div>
+        <div class="fact"><div class="fact-label">Corriendo desde</div><div class="fact-value">~8 meses</div></div>
+      </div>
+    </div>
+
+    <div class="card goals-card">
+      <div class="goal-item">
+        <div class="goal-icon">🎯</div>
+        <div class="goal-text">
+          <div class="goal-title">Correr un maratón (42K)</div>
+          <div class="goal-detail" id="goalMarathon">—</div>
+        </div>
+        <div class="goal-badge" id="goalMarathonBadge">—</div>
+      </div>
+      <hr class="divider">
+      <div class="goal-item">
+        <div class="goal-icon">⏱️</div>
+        <div class="goal-text">
+          <div class="goal-title">Bajar tiempo de media maratón</div>
+          <div class="goal-detail" id="goalHM">—</div>
+        </div>
+        <div class="goal-badge" style="background:#0a1a0a;color:#30d158;" id="goalHMBadge">PR actual</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="section-title">Resumen histórico (Strava)</div>
+  <div class="kpi-grid" id="kpiGrid"></div>
+
+  <!-- CHARTS -->
+  <div class="section-title">Volumen de entrenamiento</div>
+  <div class="charts-grid">
+    <div class="chart-card"><div class="chart-title">Distancia semanal (km)</div><div class="chart-wrap"><canvas id="chartWeekly"></canvas></div></div>
+    <div class="chart-card"><div class="chart-title">Distancia mensual (km)</div><div class="chart-wrap"><canvas id="chartMonthly"></canvas></div></div>
+    <div class="chart-card full"><div class="chart-title">Evolución del ritmo (min/km) — carreras ≥ 3 km</div><div class="chart-wrap"><canvas id="chartPace"></canvas></div></div>
+  </div>
+
+  <!-- ZONAS DE RITMO -->
+  <div class="section-title">Zonas de ritmo (Strava)</div>
+  <div class="card">
+    <div class="table-scroll">
+      <table class="zone-table">
+        <thead><tr><th>Zona</th><th>Ritmo (min/km)</th><th>Uso</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag tag-z1">Z1</span> Recuperación</td><td>&gt; 6:41</td><td>Trotes suaves, recuperación activa</td></tr>
+          <tr><td><span class="tag tag-z2">Z2</span> Resistencia</td><td>5:45 – 6:41</td><td>Base aeróbica, tiradas largas (maratón)</td></tr>
+          <tr><td><span class="tag tag-z3">Z3</span> Tempo</td><td>5:10 – 5:45</td><td>Ritmo objetivo media maratón</td></tr>
+          <tr><td><span class="tag tag-z4">Z4</span> Umbral</td><td>4:50 – 5:10</td><td>Series / umbral de lactato</td></tr>
+          <tr><td><span class="tag tag-z5">Z5</span> VO2max</td><td>4:33 – 4:50</td><td>Intervalos cortos, velocidad</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PESO -->
+  <div class="section-title">Peso corporal</div>
+  <div class="charts-grid">
+    <div class="chart-card"><div class="chart-title">Evolución del peso (kg)</div><div class="chart-wrap"><canvas id="chartWeight"></canvas></div></div>
+    <div class="chart-card">
+      <div class="chart-title">Registro de peso</div>
+      <div class="table-scroll">
+        <table class="data-table" id="weightTable">
+          <thead><tr><th>Fecha</th><th>Peso</th><th>Nota</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEDIDAS -->
+  <div class="section-title">Medidas corporales</div>
+  <div class="card" style="margin-bottom:16px;">
+    <div class="chart-title" style="margin-bottom:14px;">Puntos a medir con cinta métrica (hombre)</div>
+    <div class="measure-grid" id="measureGuide"></div>
+  </div>
+  <div class="card">
+    <div class="table-scroll">
+      <table class="data-table" id="measureTable">
+        <thead><tr></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="empty-note" id="measureEmpty" style="display:none;margin-top:12px;">Aún no hay medidas registradas. Dame los números (cuello, pecho, cintura, cadera, brazo, muslo, pantorrilla) y los agrego aquí.</div>
+  </div>
+
+  <!-- ACTIVIDAD RECIENTE -->
+  <div class="section-title">Carreras recientes</div>
+  <div class="card">
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead><tr><th>Fecha</th><th>Distancia</th><th>Tiempo</th><th>Ritmo</th><th>Esfuerzo</th></tr></thead>
+        <tbody id="recentRunsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DESGLOSE DE DEPORTES -->
+  <div class="section-title">Actividades por tipo (histórico Strava)</div>
+  <div class="card">
+    <div class="pill-row" id="sportPills"></div>
+  </div>
+
+  <div class="footer-note">
+    <b>Cómo funciona este panel:</b> el historial de carreras se trae directo de Strava y se actualiza cuando yo lo pida ("actualiza el dashboard"). El peso y las medidas corporales los voy dando por chat y quedan guardados aquí para ver la evolución con el tiempo.
+    <br><br>
+    <b>Nota sobre el historial:</b> Strava solo tiene actividades registradas desde el 20 de abril de 2026 (59 actividades). Si empezaste a correr antes, esos meses no están en Strava — el resumen y los objetivos de abajo se basan en lo que sí está registrado.
+  </div>
+
+</div>
+
+<script id="fitness-data" type="application/json">
+{
+  "last_updated": "2026-08-29",
+  "profile": {
+    "height_m": 1.75,
+    "goal_marathon_window": "3-4 meses desde 2026-08-29 (aprox. dic 2026)",
+    "half_marathon_pr": { "date": "2026-08-23", "dist_km": 21.29, "moving_seconds": 7055, "elapsed_seconds": 7069 }
+  },
+  "weight_log": [
+    { "date": "2026-08-29", "weight_kg": 77.1, "weight_lb": 170, "note": "Registro inicial (reportado)" }
+  ],
+  "measurements_log": [],
+  "weekly_series": [{"week":"2026-04-20","dist_km":23.1,"count":4},{"week":"2026-04-27","dist_km":22.4,"count":2},{"week":"2026-05-04","dist_km":18.8,"count":3},{"week":"2026-05-11","dist_km":24.0,"count":2},{"week":"2026-05-18","dist_km":18.4,"count":2},{"week":"2026-05-25","dist_km":38.1,"count":4},{"week":"2026-06-01","dist_km":6.7,"count":2},{"week":"2026-06-08","dist_km":7.0,"count":1},{"week":"2026-06-15","dist_km":5.5,"count":1},{"week":"2026-06-22","dist_km":17.0,"count":1},{"week":"2026-06-29","dist_km":19.5,"count":2},{"week":"2026-07-06","dist_km":3.0,"count":1},{"week":"2026-07-13","dist_km":28.1,"count":3},{"week":"2026-07-20","dist_km":8.0,"count":1},{"week":"2026-07-27","dist_km":43.0,"count":7},{"week":"2026-08-03","dist_km":28.5,"count":3},{"week":"2026-08-10","dist_km":31.8,"count":3},{"week":"2026-08-17","dist_km":26.3,"count":2},{"week":"2026-08-24","dist_km":25.0,"count":3}],
+  "monthly_series": [{"month":"2026-04","dist_km":25.2,"count":5},{"month":"2026-05","dist_km":119.7,"count":12},{"month":"2026-06","dist_km":36.2,"count":5},{"month":"2026-07","dist_km":83.1,"count":13},{"month":"2026-08","dist_km":130.1,"count":12}],
+  "pace_series": [{"date":"2026-04-20","pace":6.67,"dist_km":6.0},{"date":"2026-04-21","pace":6.35,"dist_km":5.68},{"date":"2026-04-25","pace":5.41,"dist_km":9.98},{"date":"2026-05-01","pace":5.99,"dist_km":20.34},{"date":"2026-05-04","pace":6.25,"dist_km":7.85},{"date":"2026-05-05","pace":6.58,"dist_km":6.32},{"date":"2026-05-08","pace":8.63,"dist_km":4.64},{"date":"2026-05-13","pace":6.83,"dist_km":6.02},{"date":"2026-05-16","pace":5.78,"dist_km":18.01},{"date":"2026-05-24","pace":5.86,"dist_km":17.26},{"date":"2026-05-26","pace":7.22,"dist_km":7.01},{"date":"2026-05-29","pace":9.28,"dist_km":3.52},{"date":"2026-05-30","pace":6.96,"dist_km":10.6},{"date":"2026-05-31","pace":5.87,"dist_km":17.01},{"date":"2026-06-06","pace":6.33,"dist_km":5.64},{"date":"2026-06-13","pace":6.35,"dist_km":7.01},{"date":"2026-06-17","pace":6.52,"dist_km":5.51},{"date":"2026-06-28","pace":6.13,"dist_km":17.01},{"date":"2026-07-03","pace":6.27,"dist_km":5.01},{"date":"2026-07-05","pace":6.14,"dist_km":14.48},{"date":"2026-07-08","pace":6.14,"dist_km":3.0},{"date":"2026-07-14","pace":5.74,"dist_km":3.11},{"date":"2026-07-17","pace":5.68,"dist_km":8.01},{"date":"2026-07-19","pace":5.75,"dist_km":17.01},{"date":"2026-07-24","pace":5.76,"dist_km":8.01},{"date":"2026-07-27","pace":8.89,"dist_km":3.38},{"date":"2026-07-29","pace":6.52,"dist_km":7.22},{"date":"2026-07-30","pace":6.87,"dist_km":6.01},{"date":"2026-07-31","pace":6.24,"dist_km":4.01},{"date":"2026-08-02","pace":5.96,"dist_km":18.46},{"date":"2026-08-04","pace":6.92,"dist_km":5.01},{"date":"2026-08-06","pace":6.21,"dist_km":7.02},{"date":"2026-08-09","pace":7.13,"dist_km":16.48},{"date":"2026-08-12","pace":6.16,"dist_km":5.03},{"date":"2026-08-14","pace":5.65,"dist_km":8.53},{"date":"2026-08-16","pace":5.92,"dist_km":18.26},{"date":"2026-08-18","pace":5.98,"dist_km":5.01},{"date":"2026-08-23","pace":5.52,"dist_km":21.29},{"date":"2026-08-26","pace":6.53,"dist_km":9.01},{"date":"2026-08-27","pace":5.97,"dist_km":7.01},{"date":"2026-08-29","pace":5.54,"dist_km":9.02}],
+  "recent_runs": [{"date":"2026-08-29","dist_km":9.02,"moving_min":50.0,"pace_min_km":5.54,"relative_effort":84,"name":"Morning Run"},{"date":"2026-08-27","dist_km":7.01,"moving_min":41.8,"pace_min_km":5.97,"relative_effort":59,"name":"Afternoon Run"},{"date":"2026-08-26","dist_km":9.01,"moving_min":58.8,"pace_min_km":6.53,"relative_effort":107,"name":"Carrera por la tarde"},{"date":"2026-08-23","dist_km":21.29,"moving_min":117.6,"pace_min_km":5.52,"relative_effort":350,"name":"Media maratón (carrera oficial)"},{"date":"2026-08-18","dist_km":5.01,"moving_min":29.9,"pace_min_km":5.98,"relative_effort":12,"name":"Carrera por la mañana"},{"date":"2026-08-16","dist_km":18.26,"moving_min":108.2,"pace_min_km":5.92,"relative_effort":157,"name":"Morning Run"},{"date":"2026-08-14","dist_km":8.53,"moving_min":48.2,"pace_min_km":5.65,"relative_effort":64,"name":"Morning Run"},{"date":"2026-08-12","dist_km":5.03,"moving_min":31.0,"pace_min_km":6.16,"relative_effort":18,"name":"Morning Run"},{"date":"2026-08-09","dist_km":16.48,"moving_min":117.5,"pace_min_km":7.13,"relative_effort":313,"name":"Morning Run"},{"date":"2026-08-06","dist_km":7.02,"moving_min":43.6,"pace_min_km":6.21,"relative_effort":21,"name":"Carrera por la mañana"},{"date":"2026-08-04","dist_km":5.01,"moving_min":34.7,"pace_min_km":6.92,"relative_effort":13,"name":"Carrera por la mañana"},{"date":"2026-08-02","dist_km":18.46,"moving_min":110.0,"pace_min_km":5.96,"relative_effort":233,"name":"Carrera por la mañana"},{"date":"2026-07-31","dist_km":4.01,"moving_min":25.0,"pace_min_km":6.24,"relative_effort":69,"name":"Morning Run"},{"date":"2026-07-30","dist_km":6.01,"moving_min":41.2,"pace_min_km":6.87,"relative_effort":42,"name":"Morning Run"}],
+  "sport_breakdown": [
+    {"label":"Running","count":48,"icon":"🏃"},
+    {"label":"HIIT","count":6,"icon":"🔥"},
+    {"label":"Fútbol","count":2,"icon":"⚽"},
+    {"label":"Pesas (en Strava)","count":2,"icon":"🏋️"},
+    {"label":"Caminata","count":1,"icon":"🚶"}
+  ],
+  "totals": { "total_runs": 48, "total_dist_km": 394.4, "total_time_min": 2452, "avg_pace_min_km": 6.23 },
+  "personal_bests": {
+    "5k": {"date":"2026-08-18","pace_min_km":5.98,"dist_km":5.01},
+    "10k": {"date":"2026-04-25","pace_min_km":5.41,"dist_km":9.98},
+    "15k": {"date":"2026-07-05","pace_min_km":6.14,"dist_km":14.48},
+    "21k": {"date":"2026-08-23","pace_min_km":5.52,"dist_km":21.29}
+  }
+}
+</script>
+
+<script>
+const DATA = JSON.parse(document.getElementById('fitness-data').textContent);
+
+function fmtPace(p){
+  if(p==null) return '—';
+  const m = Math.floor(p), s = Math.round((p-m)*60);
+  return `${m}:${String(s).padStart(2,'0')}/km`;
+}
+function fmtTime(totalSeconds){
+  const h = Math.floor(totalSeconds/3600), m = Math.floor((totalSeconds%3600)/60), s = Math.round(totalSeconds%60);
+  return h>0 ? `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}` : `${m}:${String(s).padStart(2,'0')}`;
+}
+function fmtMin(totalMin){
+  const h = Math.floor(totalMin/60), m = Math.round(totalMin%60);
+  return h>0 ? `${h}h ${m}m` : `${m}m`;
+}
+function fmtDate(d){
+  const dt = new Date(d+'T00:00:00');
+  return dt.toLocaleDateString('es-ES', {day:'2-digit', month:'short', year:'numeric'});
+}
+
+document.getElementById('lastUpdated').textContent = 'Actualizado: ' + fmtDate(DATA.last_updated);
+
+// ---- Perfil: peso + IMC ----
+const lastWeight = DATA.weight_log[DATA.weight_log.length-1];
+if(lastWeight){
+  document.getElementById('factWeight').textContent = `${lastWeight.weight_kg} kg (${lastWeight.weight_lb} lb)`;
+  const bmi = lastWeight.weight_kg / (DATA.profile.height_m ** 2);
+  document.getElementById('factBmi').textContent = bmi.toFixed(1);
+}
+
+// ---- Objetivos ----
+const today = new Date(DATA.last_updated+'T00:00:00');
+const marathonMin = new Date(today); marathonMin.setMonth(marathonMin.getMonth()+3);
+const marathonMax = new Date(today); marathonMax.setMonth(marathonMax.getMonth()+4);
+document.getElementById('goalMarathon').textContent = `Ventana objetivo: ${fmtDate(marathonMin.toISOString().slice(0,10))} – ${fmtDate(marathonMax.toISOString().slice(0,10))}`;
+const daysToMin = Math.round((marathonMin - today)/86400000);
+document.getElementById('goalMarathonBadge').textContent = `~${daysToMin}+ días`;
+
+const hm = DATA.profile.half_marathon_pr;
+document.getElementById('goalHM').textContent = `PR: ${fmtTime(hm.moving_seconds)} (${hm.dist_km} km) — ${fmtDate(hm.date)}`;
+document.getElementById('goalHMBadge').textContent = fmtTime(hm.moving_seconds);
+
+// ---- KPIs ----
+const kpis = [
+  { label:'Distancia total corrida', value:`${DATA.totals.total_dist_km} km`, sub:`${DATA.totals.total_runs} carreras`, cls:'orange' },
+  { label:'Ritmo promedio', value:fmtPace(DATA.totals.avg_pace_min_km), sub:'histórico', cls:'blue' },
+  { label:'Tiempo total corriendo', value:fmtMin(DATA.totals.total_time_min), sub:'desde abr 2026', cls:'green' },
+  { label:'PR 5K', value:fmtPace(DATA.personal_bests['5k'].pace_min_km), sub:fmtDate(DATA.personal_bests['5k'].date), cls:'teal' },
+  { label:'PR 10K', value:fmtPace(DATA.personal_bests['10k'].pace_min_km), sub:fmtDate(DATA.personal_bests['10k'].date), cls:'purple' },
+  { label:'PR Media maratón', value:fmtTime(hm.moving_seconds), sub:fmtDate(hm.date), cls:'yellow' },
+  { label:'Semana más fuerte', value:`${Math.max(...DATA.weekly_series.map(w=>w.dist_km))} km`, sub:'en una semana', cls:'red' },
+];
+document.getElementById('kpiGrid').innerHTML = kpis.map(k => `
+  <div class="kpi-card ${k.cls}">
+    <div class="kpi-label">${k.label}</div>
+    <div class="kpi-value">${k.value}</div>
+    <div class="kpi-sub">${k.sub}</div>
+  </div>`).join('');
+
+// ---- Tabla de peso ----
+document.querySelector('#weightTable tbody').innerHTML = DATA.weight_log.slice().reverse().map(w => `
+  <tr><td>${fmtDate(w.date)}</td><td>${w.weight_kg} kg / ${w.weight_lb} lb</td><td>${w.note||''}</td></tr>
+`).join('') || '<tr><td colspan="3">Sin registros aún</td></tr>';
+
+// ---- Guía de medidas ----
+const measurePoints = [
+  { name:'Cuello', desc:'Justo debajo de la nuez, cinta horizontal sin apretar.' },
+  { name:'Pecho / Tórax', desc:'A la altura de los pezones, cinta paralela al piso, respiración normal.' },
+  { name:'Cintura', desc:'En el punto más angosto del abdomen, generalmente a la altura del ombligo.' },
+  { name:'Cadera', desc:'En el punto más ancho de los glúteos.' },
+  { name:'Brazo relajado', desc:'Punto medio del bíceps, brazo colgando relajado.' },
+  { name:'Brazo flexionado', desc:'Mismo punto, bíceps contraído al máximo.' },
+  { name:'Muslo', desc:'Punto más grueso del muslo, justo debajo del glúteo.' },
+  { name:'Pantorrilla', desc:'Punto más ancho de la pantorrilla, de pie con peso repartido.' },
+];
+document.getElementById('measureGuide').innerHTML = measurePoints.map((m,i) => `
+  <div class="measure-card">
+    <div class="measure-name"><span class="measure-num">${i+1}</span>${m.name}</div>
+    <div class="measure-desc">${m.desc}</div>
+  </div>`).join('');
+
+// ---- Tabla de medidas (dinámica según measurements_log) ----
+const measureTable = document.getElementById('measureTable');
+if(DATA.measurements_log.length === 0){
+  measureTable.style.display = 'none';
+  document.getElementById('measureEmpty').style.display = 'block';
+} else {
+  const cols = ['date','neck','chest','waist','hip','arm_relaxed','arm_flexed','thigh','calf'];
+  const labels = {date:'Fecha',neck:'Cuello',chest:'Pecho',waist:'Cintura',hip:'Cadera',arm_relaxed:'Brazo (rel.)',arm_flexed:'Brazo (flex.)',thigh:'Muslo',calf:'Pantorrilla'};
+  measureTable.querySelector('thead tr').innerHTML = cols.map(c=>`<th>${labels[c]}</th>`).join('');
+  measureTable.querySelector('tbody').innerHTML = DATA.measurements_log.slice().reverse().map(row => `
+    <tr>${cols.map(c => `<td>${c==='date' ? fmtDate(row[c]) : (row[c]!=null ? row[c]+' cm' : '—')}</td>`).join('')}</tr>
+  `).join('');
+}
+
+// ---- Carreras recientes ----
+document.getElementById('recentRunsBody').innerHTML = DATA.recent_runs.map(r => `
+  <tr>
+    <td>${fmtDate(r.date)}${r.name.includes('oficial') ? ' 🏅' : ''}</td>
+    <td>${r.dist_km} km</td>
+    <td>${fmtMin(r.moving_min)}</td>
+    <td>${fmtPace(r.pace_min_km)}</td>
+    <td>${r.relative_effort}</td>
+  </tr>`).join('');
+
+// ---- Desglose deportes ----
+document.getElementById('sportPills').innerHTML = DATA.sport_breakdown.map(s => `
+  <div class="pill">
+    <span style="font-size:16px">${s.icon}</span>
+    <div><div class="pill-count">${s.count}</div><div class="pill-label">${s.label}</div></div>
+  </div>`).join('');
+
+// ---- Gráficas (aisladas: si Chart.js no carga, el resto del panel ya está renderizado) ----
+function renderCharts(){
+  if(typeof Chart === 'undefined'){
+    document.querySelectorAll('.chart-wrap').forEach(el => el.innerHTML = '<div class="empty-note" style="height:100%;display:flex;align-items:center;justify-content:center;">No se pudo cargar la librería de gráficas (Chart.js).</div>');
+    return;
+  }
+
+  Chart.defaults.color = '#888';
+  Chart.defaults.borderColor = '#1a1a1a';
+
+  new Chart(document.getElementById('chartWeekly'), {
+    type:'bar',
+    data:{ labels: DATA.weekly_series.map(w=>fmtDate(w.week)), datasets:[{ data: DATA.weekly_series.map(w=>w.dist_km), backgroundColor:'#fc4c02', borderRadius:4 }] },
+    options:{ plugins:{legend:{display:false}}, scales:{ x:{ grid:{display:false}, ticks:{maxRotation:60,minRotation:60,font:{size:9}} }, y:{ grid:{color:'#131313'} } } }
+  });
+
+  new Chart(document.getElementById('chartMonthly'), {
+    type:'bar',
+    data:{ labels: DATA.monthly_series.map(m=>m.month), datasets:[{ data: DATA.monthly_series.map(m=>m.dist_km), backgroundColor:'#4a9eff', borderRadius:6 }] },
+    options:{ plugins:{legend:{display:false}}, scales:{ x:{ grid:{display:false} }, y:{ grid:{color:'#131313'} } } }
+  });
+
+  new Chart(document.getElementById('chartPace'), {
+    type:'line',
+    data:{ labels: DATA.pace_series.map(p=>fmtDate(p.date)), datasets:[{
+      data: DATA.pace_series.map(p=>p.pace), borderColor:'#30d158', backgroundColor:'rgba(48,209,88,0.08)', fill:true, tension:0.3,
+      pointRadius: DATA.pace_series.map(p=>p.dist_km>=19?5:2), pointBackgroundColor: DATA.pace_series.map(p=>p.dist_km>=19?'#ff453a':'#30d158')
+    }]},
+    options:{ plugins:{legend:{display:false}, tooltip:{ callbacks:{ label: ctx => fmtPace(ctx.raw) } }},
+      scales:{ x:{ grid:{display:false}, ticks:{maxRotation:60,minRotation:60,font:{size:8},autoSkip:true,maxTicksLimit:20} },
+               y:{ reverse:true, grid:{color:'#131313'}, ticks:{ callback:v=>v.toFixed(1) } } } }
+  });
+
+  if(DATA.weight_log.length){
+    new Chart(document.getElementById('chartWeight'), {
+      type:'line',
+      data:{ labels: DATA.weight_log.map(w=>fmtDate(w.date)), datasets:[{ data: DATA.weight_log.map(w=>w.weight_kg), borderColor:'#ffd60a', backgroundColor:'rgba(255,214,10,0.08)', fill:true, tension:0.25, pointRadius:4, pointBackgroundColor:'#ffd60a' }] },
+      options:{ plugins:{legend:{display:false}}, scales:{ x:{ grid:{display:false} }, y:{ grid:{color:'#131313'} } } }
+    });
+  }
+}
+
+try { renderCharts(); } catch(e) { console.error('Error al renderizar gráficas:', e); }
+</script>
+
+</body>
+</html>
